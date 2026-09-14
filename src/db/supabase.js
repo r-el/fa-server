@@ -3,7 +3,7 @@
  * Manages connection to Supabase for users data
  */
 import { createClient } from "@supabase/supabase-js";
-import { supabaseConfig } from "../config/database.js";
+import { supabaseConfig } from "../config/database.ts";
 
 // Validate environment variables
 if (!supabaseConfig.url || !supabaseConfig.key) {
