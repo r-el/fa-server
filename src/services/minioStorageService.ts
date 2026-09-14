@@ -7,6 +7,7 @@ export interface ImageStream {
   stream: NodeJS.ReadableStream;
   contentType?: string;
   contentLength?: number;
+  filename?: string;
 }
 
 export interface ImageUpload {
@@ -84,6 +85,7 @@ export class MinioStorageService {
         stream: response.Body as NodeJS.ReadableStream,
         contentType: response.ContentType,
         contentLength: response.ContentLength,
+        filename: imageId,
       };
     } catch (error) {
       if (this.isMissingObject(error)) return null;

@@ -5,6 +5,7 @@ import { mongoGridFSService } from "../services/mongoGridFSService.js";
 import { getMongoDBStatus, isMongoDBAvailable } from "../db/mongodb.js";
 import os from "os";
 import { errorMessage, errorStack } from "../utils/errorMessage.js";
+import { minioStorageService } from "../services/minioStorageService.js";
 
 const router = express.Router();
 
@@ -199,7 +200,7 @@ router.get("/alerts", async (req, res) => {
 
         if (event.image_id) {
           try {
-            alertData.image = await mongoGridFSService.getImageAsBase64(event.image_id as string);
+            alertData.image = await minioStorageService.getImageAsBase64(event.image_id as string);
           } catch (error) {
             console.warn(`Failed to get image ${event.image_id}:`, errorMessage(error));
           }
@@ -232,7 +233,7 @@ router.get("/image/:imageId", async (req, res) => {
     const { format = "base64" } = req.query;
 
     if (format === "base64") {
-      const base64Image = await mongoGridFSService.getImageAsBase64(imageId);
+      const base64Image = await minioStorageService.getImageAsBase64(imageId);
       if (!base64Image) {
         res.status(404).json({ success: false, error: "Image not found" });
         return;
@@ -241,7 +242,7 @@ router.get("/image/:imageId", async (req, res) => {
       return;
     }
 
-    const imageData = await mongoGridFSService.getImageById(imageId);
+    const imageData = await minioStorageService.getImageStream(imageId);
     if (!imageData) {
       res.status(404).json({ success: false, error: "Image not found" });
       return;
@@ -249,8 +250,8 @@ router.get("/image/:imageId", async (req, res) => {
 
     res.set({
       "Content-Type": imageData.contentType,
-      "Content-Length": imageData.length,
-      "Content-Disposition": `inline; filename="${imageData.filename}"`,
+      ...(imageData.contentLength === undefined ? {} : { "Content-Length": imageData.contentLength }),
+      "Content-Disposition": `inline; filename="${imageData.filename || imageId}"`,
     });
     imageData.stream.pipe(res);
   } catch (error) {
