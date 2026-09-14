@@ -1,5 +1,5 @@
 // Script to add sample events for testing
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -7,8 +7,17 @@ dotenv.config();
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const DB_NAME = process.env.MONGODB_DB_NAME || "face_recognition_db";
 
-async function addSampleEvents() {
-  let client;
+interface SampleEvent {
+  person_id: string;
+  time: Date;
+  level: string;
+  image_id: string;
+  camera_id: string;
+  message: string;
+}
+
+async function addSampleEvents(): Promise<void> {
+  let client: MongoClient | null = null;
 
   try {
     console.log("Connecting to MongoDB...");
@@ -16,10 +25,10 @@ async function addSampleEvents() {
     await client.connect();
 
     const db = client.db(DB_NAME);
-    const eventsCollection = db.collection("Event");
+    const eventsCollection = db.collection<SampleEvent>("Event");
 
     // Sample events for camera 123 (which exists)
-    const sampleEvents = [
+    const sampleEvents: SampleEvent[] = [
       {
         person_id: "ad2a1cee4a1568440d2ad00983ec07c67ee042b5e05b65f4e7700819f6263dc6",
         time: new Date("2025-09-17T10:31:22.209Z"),
@@ -41,7 +50,7 @@ async function addSampleEvents() {
         time: new Date("2025-09-17T10:40:00.000Z"),
         level: "info",
         image_id: "d7fe8846-930b-5641-8bbe-5184e4f32a13",
-        camera_id: "456", // Different camera that user doesn't have access to
+        camera_id: "456",
         message: "Person person_003 detected by camera 456 on 2025-09-17T10:40:00.000Z."
       }
     ];
@@ -52,13 +61,10 @@ async function addSampleEvents() {
     // Verify the events were inserted
     const count = await eventsCollection.countDocuments();
     console.log(`Total events in database: ${count}`);
-
   } catch (error) {
     console.error("Error:", error);
   } finally {
-    if (client) {
-      await client.close();
-    }
+    if (client) await client.close();
   }
 }
 
