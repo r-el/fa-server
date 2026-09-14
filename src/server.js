@@ -4,7 +4,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { corsConfig } from "./config/cors.js";
+import { corsConfig } from "./config/cors.ts";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
