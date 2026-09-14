@@ -1,4 +1,4 @@
-// Centralized validation schemas for user data
+// Centralized validation schemas for user data.
 
 import Joi from "joi";
 
