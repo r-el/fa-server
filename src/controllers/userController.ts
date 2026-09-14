@@ -1,11 +1,14 @@
+import type { NextFunction, Request, Response } from "express";
 import { getUserById, getUserByUsername, getUserByEmail, getAllUsers, createUser, updateUser, deleteUser } from "../services/userService.js";
-import { ApiError } from "../middlewares/errorHandler.ts";
+import { ApiError } from "../middlewares/errorHandler.js";
+
+type AuthenticatedRequest = Request & { user: { id: string; role: string } };
 
 /**
  * Get user profile (current authenticated user)
  * GET /users/profile
  */
-export async function getProfile(req, res, next) {
+export async function getProfile(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = req.user.id; // From JWT middleware
 
@@ -36,9 +39,9 @@ export async function getProfile(req, res, next) {
  * GET /users/:id
  * Access control handled by canAccessUser middleware
  */
-export async function getUserByIdController(req, res, next) {
+export async function getUserByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const user = await getUserById(id);
     if (!user) throw new ApiError(404, "User not found");
@@ -66,9 +69,9 @@ export async function getUserByIdController(req, res, next) {
  * Get all users or filter by role
  * GET /users or GET /users?role=viewer
  */
-export async function getAllUsersController(req, res, next) {
+export async function getAllUsersController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { role } = req.query;
+    const role = typeof req.query.role === "string" ? req.query.role : null;
     
     const users = await getAllUsers(role);
     
@@ -95,7 +98,7 @@ export async function getAllUsersController(req, res, next) {
  * Create new user
  * POST /users
  */
-export async function createUserController(req, res, next) {
+export async function createUserController(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
   try {
     const userData = req.body;
     const currentUser = req.user;
@@ -135,9 +138,9 @@ export async function createUserController(req, res, next) {
  * Update user
  * PUT /users/:id
  */
-export async function updateUserController(req, res, next) {
+export async function updateUserController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const updateData = req.body;
     
     const updatedUser = await updateUser(id, updateData);
@@ -164,9 +167,9 @@ export async function updateUserController(req, res, next) {
  * Delete user
  * DELETE /users/:id
  */
-export async function deleteUserController(req, res, next) {
+export async function deleteUserController(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     await deleteUser(id);
 
