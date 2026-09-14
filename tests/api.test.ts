@@ -128,6 +128,7 @@ describe("health and root API", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, message: "Server is healthy" });
+    expect(response.headers.ratelimit).toContain("limit=1000");
   });
 
   it("returns the root API response", async () => {
