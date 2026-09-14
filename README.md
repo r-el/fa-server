@@ -10,7 +10,7 @@
 ### Installation
 
 ```bash
-cd server
+cd fa-server
 npm install
 ```
 

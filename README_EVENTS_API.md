@@ -71,7 +71,7 @@ Users can only access events from cameras they have been assigned to through the
 
 ### 1. Install Dependencies
 ```bash
-cd fs-dashboard/server
+cd fa-server
 npm install
 ```
 
