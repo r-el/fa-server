@@ -24,3 +24,13 @@ export const supabaseConfig = {
     },
   },
 } as const;
+
+export const minioConfig = {
+  endpoint: env.MINIO_ENDPOINT,
+  port: env.MINIO_PORT,
+  useSSL: env.MINIO_USE_SSL,
+  accessKey: env.MINIO_ACCESS_KEY,
+  secretKey: env.MINIO_SECRET_KEY,
+  bucketName: env.MINIO_BUCKET_NAME,
+  region: env.MINIO_REGION,
+} as const;

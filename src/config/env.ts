@@ -16,6 +16,13 @@ const envSchema = z
     BCRYPT_SALT_ROUNDS: z.coerce.number().int().min(4).max(31).default(10),
     JWT_SECRET: z.string().optional(),
     JWT_EXPIRES_IN: z.string().default("7d"),
+    MINIO_ENDPOINT: z.string().default("localhost"),
+    MINIO_PORT: z.coerce.number().int().positive().default(9000),
+    MINIO_USE_SSL: z.coerce.boolean().default(false),
+    MINIO_ACCESS_KEY: z.string().default("minioadmin"),
+    MINIO_SECRET_KEY: z.string().default("minioadmin"),
+    MINIO_BUCKET_NAME: z.string().min(1).default("face-identity-photos"),
+    MINIO_REGION: z.string().default("us-east-1"),
   })
   .superRefine((values, context) => {
     if (values.NODE_ENV !== "production") return;
