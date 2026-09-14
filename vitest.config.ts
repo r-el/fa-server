@@ -4,6 +4,11 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary"],
+      include: ["src/**/*.ts"],
+    },
     env: {
       NODE_ENV: "test",
       MONGODB_URI: "",
