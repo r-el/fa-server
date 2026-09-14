@@ -1,13 +1,13 @@
 /**
  * MongoDB Connection Module
  */
-import { MongoClient, GridFSBucket } from "mongodb";
-import { mongoConfig } from "../config/database.ts";
+import { GridFSBucket, MongoClient, type Collection } from "mongodb";
+import { mongoConfig } from "../config/database.js";
 
 // Store client, collections and GridFS as private variables
-let client;
-let eventsCollection;
-let photoStorageBucket;
+let client: MongoClient | null = null;
+let eventsCollection: Collection | null = null;
+let photoStorageBucket: GridFSBucket | null = null;
 let connectionStatus = "disconnected";
 
 // Connection options with pooling
@@ -17,11 +17,12 @@ const connectionOptions = mongoConfig.options;
  * Creates connection to MongoDB with retry logic
  * @returns {Promise} - Promise that resolves when connection is established
  */
-async function connectMongoDB(maxRetries = 3, retryDelay = 2000) {
+async function connectMongoDB(maxRetries = 3, retryDelay = 2000): Promise<MongoClient | null> {
   let retries = 0;
 
   // Check if MongoDB URI is configured
-  if (!mongoConfig.uri) {
+  const uri = mongoConfig.uri;
+  if (!uri) {
     console.log("⚠ MongoDB URI not configured - skipping MongoDB connection");
     connectionStatus = "not_configured";
     return null;
@@ -31,14 +32,15 @@ async function connectMongoDB(maxRetries = 3, retryDelay = 2000) {
     try {
       console.log(`Attempting MongoDB connection... (attempt ${retries + 1}/${maxRetries})`);
 
-      client = await MongoClient.connect(mongoConfig.uri, connectionOptions);
+      client = await MongoClient.connect(uri, connectionOptions);
 
       // Access database and collection
       const db = client.db(mongoConfig.dbName);
       eventsCollection = db.collection("Event");
 
       // Initialize GridFS bucket for photo storage
-      photoStorageBucket = new GridFSBucket(db, { bucketName: "photo_storage" });      console.log("✔ MongoDB connection established successfully");
+      photoStorageBucket = new GridFSBucket(db, { bucketName: "photo_storage" });
+      console.log("✔ MongoDB connection established successfully");
       console.log(
         `✔ Connection pool configured: min=${connectionOptions.minPoolSize}, max=${connectionOptions.maxPoolSize}`
       );
@@ -61,13 +63,15 @@ async function connectMongoDB(maxRetries = 3, retryDelay = 2000) {
       }
     }
   }
+
+  return null;
 }
 
 /**
  * Returns access to events collection
  * @returns {Collection} - MongoDB collection object
  */
-function getEventsCollection() {
+function getEventsCollection(): Collection | null {
   if (!eventsCollection) {
     console.log("⚠ MongoDB not connected - events collection unavailable");
     return null;
@@ -79,7 +83,7 @@ function getEventsCollection() {
  * Returns access to photo storage GridFS bucket
  * @returns {GridFSBucket} - GridFS bucket object
  */
-function getPhotoStorageBucket() {
+function getPhotoStorageBucket(): GridFSBucket | null {
   if (!photoStorageBucket) {
     console.log("⚠ MongoDB not connected - photo storage unavailable");
     return null;
@@ -90,23 +94,26 @@ function getPhotoStorageBucket() {
 /**
  * Get current MongoDB connection status
  */
-function getMongoDBStatus() {
+function getMongoDBStatus(): string {
   return connectionStatus;
 }
 
 /**
  * Check if MongoDB is available
  */
-function isMongoDBAvailable() {
+function isMongoDBAvailable(): boolean {
   return connectionStatus === "connected";
 }
 
 /**
  * Closes MongoDB connection
  */
-async function closeMongoDB() {
+async function closeMongoDB(): Promise<void> {
   if (client) {
     await client.close();
+    client = null;
+    eventsCollection = null;
+    photoStorageBucket = null;
     connectionStatus = "disconnected";
     console.log("MongoDB connection closed");
   }
