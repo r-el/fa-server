@@ -2,6 +2,8 @@
 
 import { Camera } from "../models/camera.js";
 
+type UserRole = "admin" | "operator" | "viewer" | string;
+
 export class CameraService {
   /**
    * Create a new camera
@@ -10,7 +12,7 @@ export class CameraService {
    * @param {string} userRole - Role of user creating the camera
    * @returns {Promise<Object>} Created camera
    */
-  static async createCamera(cameraData, userId, userRole) {
+  static async createCamera(cameraData, userId: string, userRole: UserRole) {
     // Only operators and admins can create cameras
     if (!["operator", "admin"].includes(userRole))
       throw new Error("Insufficient permissions to create camera");
@@ -32,7 +34,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {Promise<Array>} Array of cameras
    */
-  static async getCamerasForUser(userId, userRole) {
+  static async getCamerasForUser(userId: string, userRole: UserRole) {
     try {
       if (userRole === "admin")
         // Admin can see all cameras
@@ -51,7 +53,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {Promise<Object>} Camera data
    */
-  static async getCameraById(cameraId, userId, userRole) {
+  static async getCameraById(cameraId: string, userId: string, userRole: UserRole) {
     try {
       const camera = await Camera.getById(cameraId);
 
