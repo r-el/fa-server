@@ -2,16 +2,16 @@
  * 1. Connecting to dbs
  * 2. Starts the server
  */
-import { connectMongoDB, closeMongoDB } from "./src/db/mongodb.js";
+import { closeMongoDB, connectMongoDB } from "./src/db/mongodb.js";
 import { testSupabaseConnection } from "./src/db/supabase.js";
-import { serverConfig } from "./src/config/server.ts";
-import app from "./src/server.ts";
+import { serverConfig } from "./src/config/server.js";
+import app from "./src/server.js";
 
 const HOST = serverConfig.host;
 const PORT = serverConfig.port;
 
 // Graceful shutdown handler
-async function gracefulShutdown(signal) {
+async function gracefulShutdown(signal: string): Promise<void> {
   console.log(`✔ ${signal} received, shutting down gracefully...`);
   await closeMongoDB();
   process.exit(0);
@@ -22,7 +22,7 @@ process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 // Start server after init dbs
-async function startServer() {
+async function startServer(): Promise<void> {
   try {
     console.log("Starting Face Alert Server...");
 

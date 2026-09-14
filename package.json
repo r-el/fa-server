@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "tsx index.js",
-    "dev": "tsx watch index.js",
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts",
     "typecheck": "tsc --noEmit",
     "build": "echo 'No build step needed for server'",
     "build:client": "cd ../client && npm install && npm run build && cp -r dist/* ../server/public/",
