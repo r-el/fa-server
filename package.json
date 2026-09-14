@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "echo 'No build step needed for server'",
+    "build": "tsc -p tsconfig.build.json",
     "build:client": "cd ../client && npm install && npm run build && cp -r dist/* ../server/public/",
     "heroku-postbuild": "echo 'Server static files ready'"
   },
