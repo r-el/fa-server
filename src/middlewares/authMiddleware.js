@@ -4,7 +4,7 @@
  */
 import jwt from "jsonwebtoken";
 import { ApiError } from "./errorHandler.js";
-import { authConfig } from "../config/auth.js";
+import { authConfig } from "../config/auth.ts";
 
 /**
  * Middleware to authenticate JWT token
