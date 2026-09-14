@@ -4,6 +4,6 @@ export const corsConfig = {
   origin: env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim()),
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
-} as const;
+};
 
 export default corsConfig;
