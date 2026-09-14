@@ -1,6 +1,6 @@
 // BLL for camera operations
 
-import { Camera } from "../models/camera.js";
+import { Camera, type CameraData, type CameraUpdateData } from "../models/camera.js";
 
 type UserRole = "admin" | "operator" | "viewer" | string;
 
@@ -12,7 +12,7 @@ export class CameraService {
    * @param {string} userRole - Role of user creating the camera
    * @returns {Promise<Object>} Created camera
    */
-  static async createCamera(cameraData, userId: string, userRole: UserRole) {
+  static async createCamera(cameraData: Omit<CameraData, "created_by">, userId: string, userRole: UserRole) {
     // Only operators and admins can create cameras
     if (!["operator", "admin"].includes(userRole))
       throw new Error("Insufficient permissions to create camera");
@@ -75,7 +75,7 @@ export class CameraService {
    * @param {string} assignerRole - Role of user making the assignment
    * @returns {Promise<Object>} Assignment data
    */
-  static async assignCameraToUser(cameraId, targetUserId, assignerId, assignerRole) {
+  static async assignCameraToUser(cameraId: string, targetUserId: string, assignerId: string, assignerRole: UserRole) {
     // Only operators and admins can assign cameras
     if (!["operator", "admin"].includes(assignerRole))
       throw new Error("Insufficient permissions to assign camera");
@@ -109,7 +109,7 @@ export class CameraService {
    * @param {string} removerRole - Role of user removing the assignment
    * @returns {Promise<boolean>} Success status
    */
-  static async removeCameraAssignment(cameraId, targetUserId, removerId, removerRole) {
+  static async removeCameraAssignment(cameraId: string, targetUserId: string, removerId: string, removerRole: UserRole) {
     // Only operators and admins can remove assignments
     if (!["operator", "admin"].includes(removerRole))
       throw new Error("Insufficient permissions to remove camera assignment");
@@ -134,7 +134,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {Promise<Array>} Array of assignments
    */
-  static async getCameraAssignments(cameraId, userId, userRole) {
+  static async getCameraAssignments(cameraId: string, userId: string, userRole: UserRole) {
     try {
       // Check if user has access to this camera
       const camera = await Camera.getById(cameraId);
@@ -156,7 +156,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {Promise<Object>} Updated camera data
    */
-  static async updateCamera(cameraId, updateData, userId, userRole) {
+  static async updateCamera(cameraId: string, updateData: CameraUpdateData, userId: string, userRole: UserRole) {
     try {
       const camera = await Camera.getById(cameraId);
 
@@ -178,7 +178,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {Promise<boolean>} Success status
    */
-  static async deleteCamera(cameraId, userId, userRole) {
+  static async deleteCamera(cameraId: string, userId: string, userRole: UserRole) {
     try {
       const camera = await Camera.getById(cameraId);
 
@@ -197,7 +197,7 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {boolean} Whether user has access
    */
-  static userHasAccessToCamera(camera, userId, userRole) {
+  static userHasAccessToCamera(camera: CameraData, userId: string, userRole: UserRole): boolean {
     // Admin has access to all cameras
     if (userRole === "admin") return true;
 

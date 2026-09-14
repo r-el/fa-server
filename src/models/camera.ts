@@ -23,6 +23,8 @@ interface CameraRecord extends CameraData {
   updated_at?: string;
 }
 
+export type CameraUpdateData = Partial<Pick<CameraData, "name" | "camera_id" | "connection_string">>;
+
 export class Camera {
   /**
    * Create a new camera
@@ -57,7 +59,7 @@ export class Camera {
    * @param {string} userId - User ID
    * @returns {Promise<Array>} Array of cameras
    */
-  static async getCamerasByUserId(userId) {
+  static async getCamerasByUserId(userId: string): Promise<CameraRecord[]> {
     // Get cameras created by user
     const { data: createdCameras, error: createdError } = await supabase
       .from("cameras")
@@ -101,7 +103,7 @@ export class Camera {
    * Get all cameras (admin only)
    * @returns {Promise<Array>} Array of all cameras
    */
-  static async getAllCameras() {
+  static async getAllCameras(): Promise<CameraRecord[]> {
     const { data, error } = await supabase
       .from("cameras")
       .select("*")
@@ -117,7 +119,7 @@ export class Camera {
    * @param {string} cameraId - Camera ID
    * @returns {Promise<Object>} Camera data
    */
-  static async getById(cameraId) {
+  static async getById(cameraId: string): Promise<CameraRecord> {
     const { data, error } = await supabase.from("cameras").select("*").eq("id", cameraId).single();
 
     if (error) throw new Error(`Failed to get camera: ${error.message}`);
@@ -157,7 +159,7 @@ export class Camera {
    * @param {string} userId - User ID
    * @returns {Promise<boolean>} Success status
    */
-  static async removeAssignment(cameraId, userId) {
+  static async removeAssignment(cameraId: string, userId: string): Promise<boolean> {
     const { error } = await supabase
       .from("camera_user_assignments")
       .delete()
@@ -174,7 +176,7 @@ export class Camera {
    * @param {string} cameraId - Camera ID
    * @returns {Promise<Array>} Array of assignments
    */
-  static async getAssignments(cameraId) {
+  static async getAssignments(cameraId: string) {
     const { data, error } = await supabase
       .from("camera_user_assignments")
       .select(
@@ -207,7 +209,7 @@ export class Camera {
    * @param {Object} updateData - Data to update
    * @returns {Promise<Object>} Updated camera data
    */
-  static async update(cameraId, updateData) {
+  static async update(cameraId: string, updateData: CameraUpdateData) {
     const { data, error } = await supabase
       .from("cameras")
       .update({
@@ -228,7 +230,7 @@ export class Camera {
    * @param {string} cameraId - Camera ID
    * @returns {Promise<boolean>} Success status
    */
-  static async delete(cameraId) {
+  static async delete(cameraId: string): Promise<boolean> {
     const { error } = await supabase.from("cameras").delete().eq("id", cameraId);
 
     if (error) throw new Error(`Failed to delete camera: ${error.message}`);
