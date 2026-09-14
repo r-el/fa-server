@@ -43,6 +43,10 @@ function validate<T>(data: unknown, schema: ValidationSchema<T>): T {
     return result.data;
   }
 
+  if (typeof schema.validate !== "function") {
+    throw new TypeError("Schema must provide either safeParse or validate");
+  }
+
   const { error, value } = schema.validate(data, validationOptions);
   if (error) throw error;
 
