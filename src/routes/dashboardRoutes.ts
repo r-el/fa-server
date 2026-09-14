@@ -6,6 +6,7 @@ import { isMongoDBAvailable } from "../db/mongodb.js";
 import { authenticateToken } from "../middlewares/authMiddleware.js";
 import { getUserById } from "../services/userService.js";
 import { Camera } from "../models/camera.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 type AuthenticatedRequest = Request & {
   user: {
@@ -91,7 +92,7 @@ router.get("/stats", authenticateToken, async (req: AuthenticatedRequest, res: R
 
         stats.highRiskAlerts = highRiskAlerts;
       } catch (mongoError) {
-        console.warn("MongoDB query failed:", mongoError.message);
+        console.warn("MongoDB query failed:", errorMessage(mongoError));
         // Keep system status as online but use fallback values
       }
     }
@@ -104,7 +105,7 @@ router.get("/stats", authenticateToken, async (req: AuthenticatedRequest, res: R
     console.error("Dashboard stats error:", error);
     res.status(500).json({
       error: "Failed to get dashboard stats",
-      details: error.message,
+      details: errorMessage(error),
     });
   }
 });

@@ -4,6 +4,7 @@ import express from "express";
 import { mongoGridFSService } from "../services/mongoGridFSService.js";
 import { getMongoDBStatus, isMongoDBAvailable } from "../db/mongodb.js";
 import os from "os";
+import { errorMessage, errorStack } from "../utils/errorMessage.js";
 
 const router = express.Router();
 
@@ -151,8 +152,8 @@ router.get("/persons", async (_req, res) => {
 
     res.json({ success: true, persons: result.persons, stats: result.stats });
   } catch (error) {
-    console.log("MongoDB error occurred:", error.message);
-    console.log("Error stack:", error.stack);
+    console.log("MongoDB error occurred:", errorMessage(error));
+    console.log("Error stack:", errorStack(error));
     console.log("Returning mock data for persons endpoint due to error");
     res.json(mockPersonsData);
   }
@@ -200,7 +201,7 @@ router.get("/alerts", async (req, res) => {
           try {
             alertData.image = await mongoGridFSService.getImageAsBase64(event.image_id as string);
           } catch (error) {
-            console.warn(`Failed to get image ${event.image_id}:`, error.message);
+            console.warn(`Failed to get image ${event.image_id}:`, errorMessage(error));
           }
         }
         return alertData;
@@ -214,7 +215,7 @@ router.get("/alerts", async (req, res) => {
       pagination: { limit: filters.limit, skip: filters.skip, total: alertsWithImages.length },
     });
   } catch (error) {
-    console.log("MongoDB error for alerts:", error.message);
+    console.log("MongoDB error for alerts:", errorMessage(error));
     console.log("Returning mock data for alerts endpoint");
     res.json(mockAlertsData);
   }
@@ -254,7 +255,7 @@ router.get("/image/:imageId", async (req, res) => {
     imageData.stream.pipe(res);
   } catch (error) {
     console.error("Error fetching image:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch image", message: error.message });
+    res.status(500).json({ success: false, error: "Failed to fetch image", message: errorMessage(error) });
   }
 });
 
@@ -269,7 +270,7 @@ router.get("/stats", async (_req, res) => {
     res.json({ success: true, stats });
   } catch (error) {
     console.error("Error fetching stats:", error);
-    res.status(500).json({ success: false, error: "Failed to fetch statistics", message: error.message });
+    res.status(500).json({ success: false, error: "Failed to fetch statistics", message: errorMessage(error) });
   }
 });
 
@@ -300,7 +301,7 @@ router.get("/debug-db", async (_req, res) => {
       }
     });
   } catch (error) {
-    res.json({ error: error.message, stack: error.stack });
+    res.json({ error: errorMessage(error), stack: errorStack(error) });
   }
 });
 
