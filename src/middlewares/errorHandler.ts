@@ -1,5 +1,6 @@
 import type { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import { serverConfig } from "../config/server.js";
+import logger from "../utils/logger.js";
 
 const ENVIRONMENT = serverConfig.environment;
 
@@ -24,7 +25,7 @@ export const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) =>
   let error = { ...err };
   error.message = err.message;
 
-  console.error(`${new Date().toISOString()} - ERROR:`, {
+  logger.error("Unhandled request error", {
     message: error.message,
     stack: err.stack,
     url: req.originalUrl,
