@@ -1,8 +1,27 @@
-// Handles camera-related database operations
+// Handles camera-related database operations.
 
 import { getSupabaseClient } from "../db/supabase.js";
 
 const supabase = getSupabaseClient();
+
+export interface CameraData {
+  name: string;
+  camera_id: string;
+  connection_string: string;
+  created_by: string;
+}
+
+export interface CameraAssignmentData {
+  camera_id: string;
+  user_id: string;
+  assigned_by: string;
+}
+
+interface CameraRecord extends CameraData {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export class Camera {
   /**
@@ -14,7 +33,7 @@ export class Camera {
    * @param {string} cameraData.created_by - User ID who created the camera
    * @returns {Promise<Object>} Created camera data
    */
-  static async create(cameraData) {
+  static async create(cameraData: CameraData) {
     const { data, error } = await supabase
       .from("cameras")
       .insert([
@@ -68,8 +87,8 @@ export class Camera {
     if (assignedError) throw new Error(`Failed to get assigned cameras: ${assignedError.message}`);
 
     // Combine and deduplicate cameras
-    const allCameras = [...createdCameras];
-    const assignedCameraData = assignedCameras.map((item) => item.cameras);
+    const allCameras = [...createdCameras] as CameraRecord[];
+    const assignedCameraData = assignedCameras.map((item) => item.cameras as unknown as CameraRecord);
 
     assignedCameraData.forEach((assignedCamera) => {
       if (!allCameras.find((camera) => camera.id === assignedCamera.id)) allCameras.push(assignedCamera);
@@ -114,7 +133,7 @@ export class Camera {
    * @param {string} assignmentData.assigned_by - User ID who made the assignment
    * @returns {Promise<Object>} Assignment data
    */
-  static async assignToUser(assignmentData) {
+  static async assignToUser(assignmentData: CameraAssignmentData) {
     const { data, error } = await supabase
       .from("camera_user_assignments")
       .insert([
