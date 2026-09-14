@@ -1,4 +1,4 @@
-import { registerUser, loginUser } from "../services/authService.js";
+import { registerUser, loginUser } from "../services/authService.ts";
 
 /**
  * Register new user
