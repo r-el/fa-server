@@ -3,6 +3,7 @@
 import { GridFSBucket, MongoClient, type Db, type Document } from "mongodb";
 import { mongoConfig } from "../config/database.js";
 import { getMongoDBStatus, isMongoDBAvailable } from "../db/mongodb.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 interface EventFilters {
   level?: string;
@@ -186,7 +187,7 @@ class MongoGridFSService {
             const base64Image = await this.getImageAsBase64(imageId);
             if (base64Image) persons[personId].images.push(base64Image);
           } catch (error) {
-            console.warn(`Failed to get image ${imageId} for person ${personId}:`, error.message);
+            console.warn(`Failed to get image ${imageId} for person ${personId}:`, errorMessage(error));
           }
         }
       }

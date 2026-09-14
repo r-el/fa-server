@@ -6,6 +6,7 @@ import { closeMongoDB, connectMongoDB } from "./src/db/mongodb.js";
 import { testSupabaseConnection } from "./src/db/supabase.js";
 import { serverConfig } from "./src/config/server.js";
 import app from "./src/server.js";
+import { errorMessage } from "./src/utils/errorMessage.js";
 
 const HOST = serverConfig.host;
 const PORT = serverConfig.port;
@@ -33,7 +34,7 @@ async function startServer(): Promise<void> {
       console.log("✔ MongoDB connected successfully");
     } catch (error) {
       console.log("⚠ MongoDB connection failed, continuing with mock data fallback");
-      console.log("MongoDB error:", error.message);
+      console.log("MongoDB error:", errorMessage(error));
     }
 
     // Test Supabase connection
@@ -43,7 +44,7 @@ async function startServer(): Promise<void> {
       console.log("✔ Supabase connected successfully");
     } catch (error) {
       console.log("⚠ Supabase connection failed");
-      console.log("Supabase error:", error.message);
+      console.log("Supabase error:", errorMessage(error));
     }
 
     app.listen(PORT, HOST, () => {

@@ -4,6 +4,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import { supabaseConfig } from "../config/database.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 // Validate environment variables
 const url = supabaseConfig.url;
@@ -29,7 +30,7 @@ async function testSupabaseConnection(): Promise<boolean> {
     console.log("✔ Supabase connection successful");
     return true;
   } catch (error) {
-    console.error("✘ Supabase connection error:", error.message);
+    console.error("✘ Supabase connection error:", errorMessage(error));
     return false;
   }
 }
