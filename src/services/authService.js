@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { authConfig } from "../config/auth.ts";
 import jwt from "jsonwebtoken";
-import { ApiError } from "../middlewares/errorHandler.js";
+import { ApiError } from "../middlewares/errorHandler.ts";
 import { validate } from "./validationService.js";
 import { createUserSchema, loginUserSchema } from "../schemas/userSchemas.js";
 
