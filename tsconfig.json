@@ -3,15 +3,18 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "allowJs": true,
-    "checkJs": false,
+    "allowJs": false,
     "noEmit": true,
-    "strict": false,
+    "strict": true,
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "index.js"],
+  "include": ["src/**/*.ts", "index.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
