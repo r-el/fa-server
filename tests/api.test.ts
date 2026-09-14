@@ -137,6 +137,14 @@ describe("health and root API", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ success: true, message: "Welcome to FaceAlert Server!" });
   });
+
+  it("serves the OpenAPI document", async () => {
+    const response = await request(app).get("/api-docs.json");
+
+    expect(response.status).toBe(200);
+    expect(response.body.openapi).toBe("3.0.0");
+    expect(response.body.paths["/health"]).toBeDefined();
+  });
 });
 
 describe("auth API", () => {
