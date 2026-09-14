@@ -4,23 +4,17 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { corsConfig } from "./config/cors.ts";
+import { corsConfig } from "./config/cors.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
 
-// Security
 app.use(helmet());
 app.disable("x-powered-by");
-
-// CORS
 app.use(cors(corsConfig));
-
-// Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Routes
 import rootRoutes from "./routes/rootRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -38,8 +32,6 @@ app.use("/cameras", cameraRoutes);
 app.use("/events", eventRoutes);
 app.use("/api/mongo", mongoRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
-// Global error handling middleware - must be last
 app.use(globalErrorHandler);
 
 export default app;
