@@ -3,6 +3,7 @@
  */
 import { GridFSBucket, MongoClient, type Collection } from "mongodb";
 import { mongoConfig } from "../config/database.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 // Store client, collections and GridFS as private variables
 let client: MongoClient | null = null;
@@ -49,7 +50,7 @@ async function connectMongoDB(maxRetries = 3, retryDelay = 2000): Promise<MongoC
     } catch (error) {
       retries++;
       connectionStatus = "error";
-      console.error(`✘ MongoDB connection attempt ${retries} failed:`, error.message);
+      console.error(`✘ MongoDB connection attempt ${retries} failed:`, errorMessage(error));
 
       if (retries < maxRetries) {
         console.log(`Retrying in ${retryDelay}ms...`);

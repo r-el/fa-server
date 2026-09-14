@@ -4,6 +4,7 @@ import jwt, { type JwtPayload, type SignOptions } from "jsonwebtoken";
 import { ApiError } from "../middlewares/errorHandler.js";
 import { validate } from "./validationService.js";
 import { createUserSchema, loginUserSchema } from "../schemas/userSchemas.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 type UserRole = "admin" | "operator" | "viewer" | string;
 
@@ -41,7 +42,7 @@ async function hashPassword(password: string): Promise<string> {
   try {
     return await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   } catch (error) {
-    throw new Error("Failed to hash password: " + error.message);
+    throw new Error("Failed to hash password: " + errorMessage(error));
   }
 }
 
@@ -63,7 +64,7 @@ async function comparePassword(password: string, hash: string): Promise<boolean>
   try {
     return await bcrypt.compare(password, hash);
   } catch (error) {
-    throw new Error("Failed to compare password: " + error.message);
+    throw new Error("Failed to compare password: " + errorMessage(error));
   }
 }
 
@@ -91,7 +92,7 @@ function generateToken(user: AuthUser): string {
 
     return jwt.sign(payload, authConfig.jwtSecret, { expiresIn: DEFAULT_TOKEN_EXPIRATION });
   } catch (error) {
-    throw new Error("Failed to generate token: " + error.message);
+    throw new Error("Failed to generate token: " + errorMessage(error));
   }
 }
 
@@ -150,7 +151,7 @@ async function registerUser(username: string, password: string, name: string, em
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(500, "Registration failed: " + error.message);
+    throw new ApiError(500, "Registration failed: " + errorMessage(error));
   }
 }
 
@@ -186,7 +187,7 @@ async function loginUser(username: string, password: string) {
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(500, "Login failed: " + error.message);
+    throw new ApiError(500, "Login failed: " + errorMessage(error));
   }
 }
 
