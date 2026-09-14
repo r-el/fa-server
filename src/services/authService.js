@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { authConfig } from "../config/auth.js";
+import { authConfig } from "../config/auth.ts";
 import jwt from "jsonwebtoken";
 import { ApiError } from "../middlewares/errorHandler.js";
 import { validate } from "./validationService.js";
