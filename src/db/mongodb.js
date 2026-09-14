@@ -2,7 +2,7 @@
  * MongoDB Connection Module
  */
 import { MongoClient, GridFSBucket } from "mongodb";
-import { mongoConfig } from "../config/database.js";
+import { mongoConfig } from "../config/database.ts";
 
 // Store client, collections and GridFS as private variables
 let client;

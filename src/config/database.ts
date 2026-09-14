@@ -1,8 +1,3 @@
-/**
- * Database Configuration
- * Configuration settings for MongoDB
- */
-
 import { env } from "./env.js";
 
 export const mongoConfig = {
@@ -16,16 +11,16 @@ export const mongoConfig = {
   },
   collections: {
     events: "Event",
-    photoStorage: "Photo_storage"
-  }
-};
+    photoStorage: "Photo_storage",
+  },
+} as const;
 
 export const supabaseConfig = {
   url: env.SUPABASE_URL,
   key: env.SUPABASE_KEY,
   options: {
     auth: {
-      persistSession: false, // Disable session persistence for server-side usage
+      persistSession: false,
     },
   },
-};
+} as const;
