@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "typecheck": "tsc --noEmit",
     "build": "echo 'No build step needed for server'",
     "build:client": "cd ../client && npm install && npm run build && cp -r dist/* ../server/public/",
     "heroku-postbuild": "echo 'Server static files ready'",
@@ -28,5 +29,14 @@
     "mongodb": "^6.19.0"
   },
   "author": "r-el",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
 }
