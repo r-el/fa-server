@@ -4,7 +4,7 @@ import User from "../models/user.js";
 import { supabase } from "../db/supabase.js";
 import { validate } from "./validationService.js";
 import { createUserSchema, emailSchema, usernameSchema, userIdSchema } from "../schemas/userSchemas.js";
-import { hashPassword } from "./authService.js";
+import { hashPassword } from "./authService.ts";
 
 /**
  * Create a new user with password hashing
