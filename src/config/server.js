@@ -1,11 +1,9 @@
-import { config } from "dotenv";
-
-config();
+import { env } from "./env.js";
 
 export const serverConfig = {
-  port: process.env.PORT || 3000,
-  host: process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.env.HOST || "localhost"),
-  environment: process.env.NODE_ENV || "development",
+  port: env.PORT,
+  host: env.NODE_ENV === "production" ? "0.0.0.0" : env.HOST,
+  environment: env.NODE_ENV,
 };
 
 export default serverConfig;

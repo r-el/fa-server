@@ -3,13 +3,11 @@
  * Configuration settings for MongoDB
  */
 
-import { config } from "dotenv";
-
-config();
+import { env } from "./env.js";
 
 export const mongoConfig = {
-  uri: process.env.MONGODB_URI,
-  dbName: process.env.MONGODB_DB_NAME || "face_identity",
+  uri: env.MONGODB_URI,
+  dbName: env.MONGODB_DB_NAME,
   options: {
     maxPoolSize: 10,
     minPoolSize: 2,
@@ -23,8 +21,8 @@ export const mongoConfig = {
 };
 
 export const supabaseConfig = {
-  url: process.env.SUPABASE_URL,
-  key: process.env.SUPABASE_KEY,
+  url: env.SUPABASE_URL,
+  key: env.SUPABASE_KEY,
   options: {
     auth: {
       persistSession: false, // Disable session persistence for server-side usage

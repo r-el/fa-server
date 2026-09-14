@@ -26,7 +26,8 @@
     "helmet": "^8.1.0",
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.19.0"
+    "mongodb": "^6.19.0",
+    "zod": "^4.1.12"
   },
   "author": "r-el",
   "license": "ISC",

@@ -1,9 +1,7 @@
-import { config } from "dotenv";
-
-config();
+import { env } from "./env.js";
 
 export const corsConfig = {
-  origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000", "http://localhost:5173"],
+  origin: env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim()),
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 };
