@@ -1,7 +1,21 @@
-// Handles event-related database operations
+// Handles event-related database operations.
 
 import { getEventsCollection, getPhotoStorageBucket } from "../db/mongodb.js";
 import { ObjectId } from "mongodb";
+
+interface EventQueryOptions {
+  page?: number;
+  limit?: number;
+  level?: string;
+  startDate?: Date | string;
+  endDate?: Date | string;
+}
+
+interface EventFilter {
+  camera_id: { $in: string[] };
+  level?: string;
+  Processing_time?: { $gte?: Date; $lte?: Date };
+}
 
 export class Event {
   /**
@@ -15,7 +29,7 @@ export class Event {
    * @param {Date} options.endDate - Filter events to date (optional)
    * @returns {Promise<Object>} Events data with pagination info
    */
-  static async getEventsByCameraIds(cameraIds, options = {}) {
+  static async getEventsByCameraIds(cameraIds: string[], options: EventQueryOptions = {}) {
     try {
       const eventsCollection = getEventsCollection();
       
@@ -30,7 +44,7 @@ export class Event {
       const skip = (page - 1) * limit;
 
       // Build query filter
-      const filter = {
+      const filter: EventFilter = {
         camera_id: { $in: cameraIds }
       };
 
@@ -78,7 +92,7 @@ export class Event {
    * @param {string} eventId - Event ID
    * @returns {Promise<Object>} Event data
    */
-  static async getEventById(eventId) {
+  static async getEventById(eventId: string) {
     try {
       const eventsCollection = getEventsCollection();
       
@@ -101,7 +115,7 @@ export class Event {
    * @param {ObjectId} imageId - Image ID
    * @returns {Promise<Buffer>} Image buffer
    */
-  static async getImageById(imageId) {
+  static async getImageById(imageId: string | InstanceType<typeof ObjectId>) {
     try {
       const bucket = getPhotoStorageBucket();
       
@@ -157,11 +171,11 @@ export class Event {
    * @param {Object} filters - Optional filters
    * @returns {Promise<number>} Total events count
    */
-  static async getEventsCount(cameraIds, filters = {}) {
+  static async getEventsCount(cameraIds: string[], filters: EventQueryOptions = {}) {
     try {
       const eventsCollection = getEventsCollection();
       
-      const filter = {
+      const filter: EventFilter = {
         camera_id: { $in: cameraIds }
       };
 
@@ -187,7 +201,7 @@ export class Event {
    * @param {Array} cameraIds - Array of camera IDs
    * @returns {Promise<Array>} Events grouped by level
    */
-  static async getEventsStatsByLevel(cameraIds) {
+  static async getEventsStatsByLevel(cameraIds: string[]) {
     try {
       const eventsCollection = getEventsCollection();
       
