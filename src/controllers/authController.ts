@@ -1,10 +1,11 @@
-import { registerUser, loginUser } from "../services/authService.ts";
+import type { NextFunction, Request, Response } from "express";
+import { loginUser, registerUser } from "../services/authService.js";
 
 /**
  * Register new user
  * POST /auth/register
  */
-export async function register(req, res, next) {
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { username, password, name, email, role } = req.body;
 
@@ -33,7 +34,7 @@ export async function register(req, res, next) {
  * Login user
  * POST /auth/login
  */
-export async function login(req, res, next) {
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { username, password } = req.body;
 
