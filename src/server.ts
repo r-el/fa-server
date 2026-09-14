@@ -7,6 +7,7 @@ import helmet from "helmet";
 import { corsConfig } from "./config/cors.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { globalLimiter } from "./middlewares/rateLimiter.js";
+import { setupSwagger } from "./config/swagger.js";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/cameras", cameraRoutes);
 app.use("/events", eventRoutes);
 app.use("/api/mongo", mongoRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+setupSwagger(app);
 app.use(globalErrorHandler);
 
 export default app;
