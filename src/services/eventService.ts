@@ -3,6 +3,15 @@
 import { Event } from "../models/event.js";
 import { CameraService } from "./cameraService.js";
 
+interface EventOptions {
+  page?: number;
+  limit?: number;
+  level?: string;
+  startDate?: Date;
+  endDate?: Date;
+  cameraId?: string;
+}
+
 export class EventService {
   /**
    * Get events for user based on their accessible cameras
@@ -11,7 +20,7 @@ export class EventService {
    * @param {Object} options - Query options
    * @returns {Promise<Object>} Events data
    */
-  static async getEventsForUser(userId, userRole, options = {}) {
+  static async getEventsForUser(userId, userRole, options: EventOptions = {}) {
     try {
       // Get cameras accessible to user
       const cameras = await CameraService.getCamerasForUser(userId, userRole);
@@ -82,7 +91,7 @@ export class EventService {
       }
 
       // Get the image using image_id from event
-      const imageBuffer = await Event.getImageById(event.image_id);
+      const imageBuffer = await Event.getImageById(event.image_id) as Buffer;
       
       if (!imageBuffer || imageBuffer.length === 0) {
         throw new Error("Image data is empty or corrupted");

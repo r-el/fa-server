@@ -40,9 +40,9 @@ export const getEvents = async (req, res, next) => {
       pagination: {
         page,
         limit,
-        total: result.total,
-        totalPages: Math.ceil(result.total / limit),
-        hasNext: page * limit < result.total,
+        total: result.pagination.total,
+        totalPages: Math.ceil(result.pagination.total / limit),
+        hasNext: page * limit < result.pagination.total,
         hasPrev: page > 1
       }
     });
