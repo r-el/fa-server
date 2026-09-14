@@ -1,25 +1,43 @@
-import express from "express";
-import request from "supertest";
-import { describe, expect, it } from "vitest";
-import { ApiError, globalErrorHandler } from "../src/middlewares/errorHandler.js";
+import { describe, it, expect, vi } from 'vitest';
+import { ApiError, globalErrorHandler } from '@core/middlewares/errorHandler.js';
 
-function createErrorApp(error: unknown) {
-  const app = express();
-  app.get("/error", (_req, _res, next) => next(error));
-  app.use(globalErrorHandler);
-  return app;
-}
+describe('Error Handler Middleware', () => {
+  it('should format ApiError correctly', () => {
+    const err = new ApiError(404, "Resource not found");
+    const req = { originalUrl: '/api/test', method: 'GET', ip: '127.0.0.1' } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+    const next = vi.fn();
 
-describe("global error handler", () => {
-  it("serializes ApiError status and message", async () => {
-    const response = await request(createErrorApp(new ApiError(418, "teapot"))).get("/error");
-    expect(response.status).toBe(418);
-    expect(response.body).toMatchObject({ success: false, error: "teapot" });
+    // Mock console.error to avoid test output noise
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    globalErrorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: "Resource not found"
+    }));
+
+    consoleSpy.mockRestore();
   });
 
-  it("falls back to HTTP 500 for unknown errors", async () => {
-    const response = await request(createErrorApp(new Error("unexpected"))).get("/error");
-    expect(response.status).toBe(500);
-    expect(response.body).toMatchObject({ success: false, error: "unexpected" });
+  it('should fallback to 500 for standard errors', () => {
+    const err = new Error("Something blew up!");
+    const req = { originalUrl: '/api/test', method: 'GET', ip: '127.0.0.1' } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+    const next = vi.fn();
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    globalErrorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: "Something blew up!"
+    }));
+
+    consoleSpy.mockRestore();
   });
 });

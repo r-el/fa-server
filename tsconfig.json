@@ -4,8 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowJs": false,
-    "noEmit": true,
-    "strict": true,
+    "strict": false,
     "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
     "strictNullChecks": false,
@@ -13,7 +12,21 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node", "reflect-metadata"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@auth/*": ["./src/auth/*"],
+      "@users/*": ["./src/users/*"],
+      "@cameras/*": ["./src/cameras/*"],
+      "@events/*": ["./src/events/*"],
+      "@dashboard/*": ["./src/dashboard/*"],
+      "~types/*": ["./src/@types/*"]
+    }
   },
   "include": ["src/**/*.ts", "index.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]

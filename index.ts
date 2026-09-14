@@ -2,15 +2,16 @@
  * 1. Connecting to dbs
  * 2. Starts the server
  */
-import { closeMongoDB, connectMongoDB } from "./src/db/mongodb.js";
-import { testSupabaseConnection } from "./src/db/supabase.js";
-import { serverConfig } from "./src/config/server.js";
+import "reflect-metadata";
+import { closeMongoDB, connectMongoDB } from "@core/db/mongodb.js";
+import { testSupabaseConnection } from "@core/db/supabase.js";
+import { serverConfig } from "@core/config/server.js";
 import app from "./src/server.js";
-import { errorMessage } from "./src/utils/errorMessage.js";
-import logger from "./src/utils/logger.js";
+import logger from "@core/utils/logger.js";
+import { errorMessage } from "@core/utils/errorMessage.js";
 
 const HOST = serverConfig.host;
-const PORT = serverConfig.port;
+const PORT = Number(serverConfig.port);
 
 // Graceful shutdown handler
 async function gracefulShutdown(signal: string): Promise<void> {
@@ -41,8 +42,12 @@ async function startServer(): Promise<void> {
     // Test Supabase connection
     console.log("Testing Supabase connection...");
     try {
-      await testSupabaseConnection();
-      console.log("✔ Supabase connected successfully");
+      const isConnected = await testSupabaseConnection();
+      if (isConnected) {
+        console.log("✔ Supabase connected successfully");
+      } else {
+        throw new Error("Supabase connection check returned false");
+      }
     } catch (error) {
       console.log("⚠ Supabase connection failed");
       logger.error("Supabase connection failed", { error: errorMessage(error) });
