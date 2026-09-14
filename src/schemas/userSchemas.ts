@@ -1,41 +1,28 @@
 // Centralized validation schemas for user data.
 
-import Joi from "joi";
+import { z } from "zod";
 
 const baseSchemas = {
-  username: Joi.string().alphanum().min(3).max(30).required().messages({
-    "string.alphanum": "Username must contain only alphanumeric characters",
-    "string.min": "Username must be at least 3 characters long",
-    "string.max": "Username cannot exceed 30 characters",
-    "any.required": "Username is required",
-  }),
+  username: z
+    .string()
+    .regex(/^[a-zA-Z0-9]+$/, "Username must contain only alphanumeric characters")
+    .min(3, "Username must be at least 3 characters long")
+    .max(30, "Username cannot exceed 30 characters"),
 
-  password: Joi.string().min(6).required().messages({
-    "string.min": "Password must be at least 6 characters long",
-    "any.required": "Password is required",
-  }),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
 
-  name: Joi.string().trim().max(100).required().messages({
-    "string.max": "Name cannot exceed 100 characters",
-    "any.required": "Name is required",
-  }),
+  name: z.string().trim().min(1, "Name is required").max(100, "Name cannot exceed 100 characters"),
 
-  email: Joi.string().email().lowercase().required().messages({
-    "string.email": "Please enter a valid email address",
-    "any.required": "Email is required",
-  }),
+  email: z.string().email("Please enter a valid email address").transform((value) => value.toLowerCase()),
 
-  role: Joi.string().valid("admin", "operator", "viewer").default("viewer").messages({
-    "any.only": "Role must be admin, operator, or viewer",
-  }),
+  role: z.enum(["admin", "operator", "viewer"], {
+    error: "Role must be admin, operator, or viewer",
+  }).default("viewer"),
 
-  userId: Joi.string().uuid().required().messages({
-    "string.uuid": "Invalid user ID format",
-    "any.required": "User ID is required",
-  }),
+  userId: z.string().uuid("Invalid user ID format"),
 };
 
-const createUserSchema = Joi.object({
+const createUserSchema = z.object({
   username: baseSchemas.username,
   password: baseSchemas.password,
   name: baseSchemas.name,
@@ -43,13 +30,9 @@ const createUserSchema = Joi.object({
   role: baseSchemas.role,
 });
 
-const loginUserSchema = Joi.object({
-  username: Joi.string().required().messages({
-    "any.required": "Username is required",
-  }),
-  password: Joi.string().required().messages({
-    "any.required": "Password is required",
-  }),
+const loginUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 const userIdSchema = baseSchemas.userId;
