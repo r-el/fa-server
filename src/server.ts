@@ -6,6 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import { corsConfig } from "./config/cors.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
+import { globalLimiter } from "./middlewares/rateLimiter.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.disable("x-powered-by");
 app.use(cors(corsConfig));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(globalLimiter);
 
 import rootRoutes from "./routes/rootRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
