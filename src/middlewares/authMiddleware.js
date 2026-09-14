@@ -3,7 +3,7 @@
  * JWT token verification middleware
  */
 import jwt from "jsonwebtoken";
-import { ApiError } from "./errorHandler.js";
+import { ApiError } from "./errorHandler.ts";
 import { authConfig } from "../config/auth.ts";
 
 /**

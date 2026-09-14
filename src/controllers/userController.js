@@ -1,5 +1,5 @@
 import { getUserById, getUserByUsername, getUserByEmail, getAllUsers, createUser, updateUser, deleteUser } from "../services/userService.js";
-import { ApiError } from "../middlewares/errorHandler.js";
+import { ApiError } from "../middlewares/errorHandler.ts";
 
 /**
  * Get user profile (current authenticated user)
