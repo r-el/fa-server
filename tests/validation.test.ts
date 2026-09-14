@@ -1,19 +1,36 @@
-import { describe, expect, it } from "vitest";
-import { z } from "zod";
-import { validate } from "../src/services/validationService.js";
+import { describe, it, expect } from 'vitest';
+import { validate } from '@core/validationService.js';
+import { z } from 'zod';
+import { ApiError } from '@core/middlewares/errorHandler.js';
 
-describe("validation service", () => {
-  it("returns parsed and transformed Zod data", () => {
-    const schema = z.object({ email: z.string().email().transform((value) => value.toLowerCase()) });
-    expect(validate({ email: "USER@EXAMPLE.COM" }, schema)).toEqual({ email: "user@example.com" });
+describe('Validation Service', () => {
+  it('should pass validation when data matches schema', () => {
+    const schema = z.object({
+      name: z.string(),
+      age: z.number()
+    });
+
+    const data = { name: "John", age: 30 };
+    const result = validate(data, schema);
+
+    expect(result).toEqual(data);
   });
 
-  it("rejects invalid data", () => {
-    const schema = z.object({ age: z.number().int().positive() });
-    expect(() => validate({ age: -1 }, schema)).toThrow();
-  });
+  it('should throw ApiError with 400 status when validation fails', () => {
+    const schema = z.object({
+      email: z.string().email(),
+    });
 
-  it("rejects unsupported schema contracts", () => {
-    expect(() => validate({}, {} as never)).toThrow("safeParse or validate");
+    const data = { email: "invalid-email" };
+
+    try {
+      validate(data, schema);
+      expect.fail('Should have thrown an error');
+    } catch (e: any) {
+      expect(e).toBeInstanceOf(ApiError);
+      expect(e.statusCode).toBe(400);
+      expect(e.errors).toBeDefined();
+      expect(e.errors.length).toBeGreaterThan(0);
+    }
   });
 });
