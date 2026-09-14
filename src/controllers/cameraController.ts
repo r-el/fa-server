@@ -1,7 +1,6 @@
 import { CameraService } from "../services/cameraService.js";
 import { validate } from "../services/validationService.js";
-
-import Joi from "joi";
+import { z } from "zod";
 import {
   createCameraSchema,
   updateCameraSchema,
@@ -9,6 +8,18 @@ import {
   cameraIdSchema,
   getCamerasQuerySchema,
 } from "../schemas/cameraSchemas.js";
+
+function parseSchema(schema, data) {
+  const result = schema.safeParse(data);
+  if (result.success) return { error: null, value: result.data };
+
+  return {
+    error: {
+      details: result.error.issues.map((issue) => ({ message: issue.message })),
+    },
+    value: undefined,
+  };
+}
 
 export class CameraController {
   /**
@@ -19,7 +30,7 @@ export class CameraController {
   static async createCamera(req, res) {
     try {
       // Validate request body
-      const { error, value } = createCameraSchema.validate(req.body);
+      const { error, value } = parseSchema(createCameraSchema, req.body);
       if (error) {
         return res.status(400).json({
           success: false,
@@ -56,7 +67,7 @@ export class CameraController {
   static async getCameras(req, res) {
     try {
       // Validate query parameters
-      const { error, value } = getCamerasQuerySchema.validate(req.query);
+      const { error, value } = parseSchema(getCamerasQuerySchema, req.query);
       if (error) {
         return res.status(400).json({
           success: false,
@@ -93,12 +104,7 @@ export class CameraController {
   static async getCameraById(req, res) {
     try {
       // Validate camera ID parameter
-      const { error, value } = schema.validate(
-        {
-          camera_id: req.params.camera_id,
-        },
-        cameraIdSchema
-      );
+      const { error, value } = parseSchema(cameraIdSchema, { camera_id: req.params.camera_id });
       if (error) {
         return res.status(400).json({
           success: false,
@@ -136,12 +142,7 @@ export class CameraController {
   static async updateCamera(req, res) {
     try {
       // Validate camera ID parameter
-      const { error: idError, value: idValue } = schema.validate(
-        {
-          camera_id: req.params.camera_id,
-        },
-        cameraIdSchema
-      );
+      const { error: idError, value: idValue } = parseSchema(cameraIdSchema, { camera_id: req.params.camera_id });
       if (idError) {
         return res.status(400).json({
           success: false,
@@ -151,7 +152,7 @@ export class CameraController {
       }
 
       // Validate request body
-      const { error: bodyError, value: bodyValue } = schema.validate(req.body, updateCameraSchema);
+      const { error: bodyError, value: bodyValue } = parseSchema(updateCameraSchema, req.body);
       if (bodyError) {
         return res.status(400).json({
           success: false,
@@ -189,12 +190,7 @@ export class CameraController {
   static async deleteCamera(req, res) {
     try {
       // Validate camera ID parameter
-      const { error, value } = schema.validate(
-        {
-          camera_id: req.params.camera_id,
-        },
-        cameraIdSchema
-      );
+      const { error, value } = parseSchema(cameraIdSchema, { camera_id: req.params.camera_id });
       if (error) {
         return res.status(400).json({
           success: false,
@@ -271,12 +267,7 @@ export class CameraController {
   static async removeAssignment(req, res) {
     try {
       // Validate camera ID parameter
-      const { error: idError, value: idValue } = schema.validate(
-        {
-          camera_id: req.params.camera_id,
-        },
-        cameraIdSchema
-      );
+      const { error: idError, value: idValue } = parseSchema(cameraIdSchema, { camera_id: req.params.camera_id });
       if (idError) {
         return res.status(400).json({
           success: false,
@@ -286,13 +277,8 @@ export class CameraController {
       }
 
       // Validate user ID parameter
-      const userIdSchema = Joi.object({
-        user_id: Joi.string().uuid().required(),
-      });
-      const { error: userError, value: userValue } = schema.validate(
-        { user_id: req.params.user_id },
-        userIdSchema
-      );
+      const userIdSchema = z.object({ user_id: z.string().uuid() });
+      const { error: userError, value: userValue } = parseSchema(userIdSchema, { user_id: req.params.user_id });
       if (userError) {
         return res.status(400).json({
           success: false,
@@ -330,12 +316,7 @@ export class CameraController {
   static async getCameraAssignments(req, res) {
     try {
       // Validate camera ID parameter
-      const { error, value } = schema.validate(
-        {
-          camera_id: req.params.camera_id,
-        },
-        cameraIdSchema
-      );
+      const { error, value } = parseSchema(cameraIdSchema, { camera_id: req.params.camera_id });
       if (error) {
         return res.status(400).json({
           success: false,
