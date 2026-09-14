@@ -4,7 +4,7 @@
  */
 import { connectMongoDB, closeMongoDB } from "./src/db/mongodb.js";
 import { testSupabaseConnection } from "./src/db/supabase.js";
-import { serverConfig } from "./src/config/server.js";
+import { serverConfig } from "./src/config/server.ts";
 import app from "./src/server.js";
 
 const HOST = serverConfig.host;

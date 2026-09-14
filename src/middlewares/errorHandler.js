@@ -1,4 +1,4 @@
-import { serverConfig } from "../config/server.js";
+import { serverConfig } from "../config/server.ts";
 
 const ENVIRONMENT = serverConfig.environment;
 
