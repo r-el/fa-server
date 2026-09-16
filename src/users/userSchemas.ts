@@ -33,8 +33,8 @@ const loginUserSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const userIdSchema = z.object({ user_id: baseSchemas.userId });
-const usernameSchema = z.object({ username: baseSchemas.username });
-const emailSchema = z.object({ email: baseSchemas.email });
+const userIdSchema = baseSchemas.userId;
+const usernameSchema = baseSchemas.username;
+const emailSchema = baseSchemas.email;
 
 export { createUserSchema, loginUserSchema, userIdSchema, usernameSchema, emailSchema, baseSchemas };
