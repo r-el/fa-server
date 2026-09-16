@@ -70,3 +70,36 @@ export async function login(req: TypedRequest<typeof loginUserSchema>, res: Resp
     next(error);
   }
 }
+
+/**
+ * Authenticates a user via Google OAuth using an ID token.
+ *
+ * @route POST /auth/google
+ * @param {Request} req - Express Request object containing { idToken: string }
+ * @param {Response} res - Express Response object
+ * @param {NextFunction} next - Express Next function for error handling
+ */
+export async function googleLogin(req: any, res: Response, next: NextFunction) {
+  try {
+    const { idToken } = req.body;
+
+    const result = await container.resolve(AuthService).authenticateViaStrategy("google", { idToken });
+
+    res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data: {
+        user: {
+          id: result.user.id,
+          username: result.user.username,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+        },
+        token: result.token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}

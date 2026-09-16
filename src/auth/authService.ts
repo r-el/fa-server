@@ -1,65 +1,75 @@
-import { injectable, inject } from "tsyringe";
+import { injectable, inject, delay } from "tsyringe";
 import bcrypt from "bcrypt";
-import { authConfig } from "@core/config/auth.js";
 import jwt from "jsonwebtoken";
+import { authConfig } from "@core/config/auth.js";
 import { ApiError } from "@core/middlewares/errorHandler.js";
 import { validate } from "@core/validationService.js";
 import { createUserSchema, loginUserSchema } from "@users/userSchemas.js";
 import { UserService } from "@users/userService.js";
 import logger from "@core/utils/logger.js";
+import { EmailService } from "../services/email/emailService.js";
+
+// Strategies
+import type { IAuthStrategy, AuthResult } from "./strategies/IAuthStrategy.js";
+import { LocalStrategy } from "./strategies/localStrategy.js";
+import { GoogleStrategy } from "./strategies/googleStrategy.js";
 
 const BCRYPT_SALT_ROUNDS = authConfig.bcryptSaltRounds;
 const DEFAULT_TOKEN_EXPIRATION = authConfig.jwtExpiresIn;
 const JWT_SECRET = authConfig.jwtSecret;
 
-import { delay } from "tsyringe";
-
 @injectable()
 export class AuthService {
-  constructor(@inject(delay(() => UserService)) private userService: UserService) {}
+  private strategies: Map<string, IAuthStrategy> = new Map();
 
-  /**
-   * Hash a password using bcrypt
-   *
-   * @param {string} password - Plain text password to hash
-   * @returns {Promise<string>} - Hashed password
-   * @throws {Error} - If hashing fails
-   */
-  static async hashPassword(password: string): Promise<string> {
-    if (!password) throw new Error("Password cannot be empty");
-    if (typeof password !== "string") throw new Error("Password must be type of string");
-
-    try {
-      return await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-    } catch (error: any) {
-      throw new Error("Failed to hash password: " + error.message);
-    }
+  constructor(
+    @inject(delay(() => UserService)) private userService: UserService,
+    private localStrategy: LocalStrategy,
+    private googleStrategy: GoogleStrategy,
+    private emailService: EmailService
+  ) {
+    // Register available strategies
+    this.strategies.set(this.localStrategy.strategyName, this.localStrategy);
+    this.strategies.set(this.googleStrategy.strategyName, this.googleStrategy);
   }
 
   /**
-   * Verify a password against a hash
-   *
-   * @param {string} password - Plain text password
-   * @param {string} hash - Hashed password from database
-   * @returns {Promise<boolean>} - True if match
+   * Main entry point for Strategy-based authentication
    */
-  async verifyPassword(password: string, hash: string): Promise<boolean> {
-    if (!password || !hash) return false;
-    try {
-      return await bcrypt.compare(password, hash);
-    } catch (error: any) {
-      logger.error("Password verification error: " + error.message);
-      return false;
+  async authenticateViaStrategy(strategyName: string, credentials: unknown) {
+    const strategy = this.strategies.get(strategyName);
+    if (!strategy) {
+      throw new ApiError(400, `Authentication strategy '${strategyName}' is not supported`);
     }
+
+    const authResult = await strategy.authenticate(credentials);
+
+    // Send welcome email if this is a newly created user (e.g. first time Google login)
+    if (authResult.isNewUser) {
+      // Don't await this, let it send in the background
+      this.emailService.sendWelcomeEmail(authResult.email, authResult.name).catch((err) => {
+        logger.error("Failed to send welcome email in background", { error: err });
+      });
+    }
+
+    const token = this.generateToken(authResult);
+
+    return {
+      user: {
+        id: authResult.id,
+        username: authResult.username,
+        name: authResult.name,
+        email: authResult.email,
+        role: authResult.role,
+      },
+      token,
+    };
   }
 
   /**
    * Generate JWT token for a user
-   *
-   * @param {Object} user - User object
-   * @returns {string} - JWT token
    */
-  generateToken(user: any): string {
+  generateToken(user: { id: string; username: string; name: string; email: string; role: string }): string {
     const payload = {
       id: user.id,
       username: user.username,
@@ -73,7 +83,7 @@ export class AuthService {
   }
 
   /**
-   * Register a new user
+   * Register a new user (Local Registration)
    */
   async registerUser(username: string, password: string, name: string, email: string, role: string = "viewer") {
     const validatedData = validate({ username, password, name, email, role }, createUserSchema);
@@ -87,33 +97,48 @@ export class AuthService {
     // Create user
     const user = await this.userService.createUser(validatedData);
 
+    // Send welcome email asynchronously
+    this.emailService.sendWelcomeEmail(user.email!, user.name!).catch((err) => {
+      logger.error("Failed to send welcome email in background", { error: err });
+    });
+
     // Generate token
-    const token = this.generateToken(user);
+    const token = this.generateToken(user as any);
 
     return { user, token };
   }
 
   /**
-   * Login user
+   * Login user (Legacy Local Login, routes to LocalStrategy)
    */
   async loginUser(username: string, password: string) {
-    const validatedData = validate({ username, password }, loginUserSchema);
+    return this.authenticateViaStrategy("local", { username, password });
+  }
 
-    // Find user
-    const user = await this.userService.getUserByUsername(validatedData.username);
-    if (!user) {
-      throw new ApiError(401, "Invalid username or password");
+  /**
+   * Utility for hashing passwords
+   */
+  static async hashPassword(password: string): Promise<string> {
+    if (!password) throw new Error("Password cannot be empty");
+    if (typeof password !== "string") throw new Error("Password must be type of string");
+
+    try {
+      return await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+    } catch (error: any) {
+      throw new Error("Failed to hash password: " + error.message);
     }
+  }
 
-    // Verify password
-    const isMatch = await this.verifyPassword(validatedData.password, user.password as string);
-    if (!isMatch) {
-      throw new ApiError(401, "Invalid username or password");
+  /**
+   * Utility for verifying a password against a hash
+   */
+  async verifyPassword(password: string, hash: string): Promise<boolean> {
+    if (!password || !hash) return false;
+    try {
+      return await bcrypt.compare(password, hash);
+    } catch (error: any) {
+      logger.error("Password verification error: " + error.message);
+      return false;
     }
-
-    // Generate token
-    const token = this.generateToken(user);
-
-    return { user, token };
   }
 }
