@@ -3,10 +3,12 @@ import logger from "@core/utils/logger.js";
 /**
  * 1. Connecting to dbs
  * 2. Starts the server
+ * 3. Initializes Socket.IO for real-time notifications
  */
 import { connectMongoDB, closeMongoDB } from "@core/db/mongodb.js";
 import { testSupabaseConnection } from "@core/db/supabase.js";
 import { serverConfig } from "@core/config/server.js";
+import { initializeSocketServer } from "./notifications/socketServer.js";
 import app from "./server.js";
 
 const HOST = serverConfig.host as string;
@@ -48,11 +50,15 @@ async function startServer() {
       logger.info("Supabase error:", error.message);
     }
 
-    app.listen(PORT, HOST, () => {
+    const httpServer = app.listen(PORT, HOST, () => {
       logger.info(`✔ FaceAlert server running on http://${HOST}:${PORT}`);
       logger.info(`✔ Environment: ${serverConfig.environment}`);
       logger.info("✔ Server started - databases will connect on demand");
     });
+
+    // Attach Socket.IO to the running HTTP server
+    initializeSocketServer(httpServer);
+    logger.info("✔ Real-time notification system initialized");
   } catch (error) {
     logger.error("✘ Failed to start server:", error);
     process.exit(1);
