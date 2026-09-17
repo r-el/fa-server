@@ -60,16 +60,47 @@ export class EmailService {
   }
 
   /**
-   * Sends a welcome / verification email to a newly registered user.
+   * Sends an email with a 6-digit verification code.
+   */
+  async sendVerificationCodeEmail(toEmail: string, name: string, code: string): Promise<boolean> {
+    const subject = `FaceAlert - Your Verification Code: ${code}`;
+    const html = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; color: #1e293b;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #0284c7; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.5px;">FaceAlert Security</h1>
+          <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Command Center Email Verification</p>
+        </div>
+        <p style="font-size: 15px; line-height: 1.6;">Hello <strong>${name}</strong>,</p>
+        <p style="font-size: 15px; line-height: 1.6; color: #475569;">Please use the following 6-digit code to verify your email address and activate your operator account:</p>
+        <div style="margin: 28px 0; text-align: center;">
+          <div style="display: inline-block; padding: 16px 32px; background: #0f172a; color: #38bdf8; font-size: 36px; font-weight: 800; letter-spacing: 12px; border-radius: 12px; font-family: monospace;">
+            ${code}
+          </div>
+        </div>
+        <p style="font-size: 13px; color: #94a3b8; text-align: center;">This code will expire in 15 minutes.</p>
+        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">If you did not request this verification, please disregard this message.</p>
+      </div>
+    `;
+
+    return this.sendEmail({
+      to: toEmail,
+      subject,
+      text: `Your FaceAlert verification code is: ${code}`,
+      html,
+    });
+  }
+
+  /**
+   * Sends a welcome email to a newly registered user.
    */
   async sendWelcomeEmail(toEmail: string, name: string): Promise<boolean> {
-    const subject = "Welcome to FaceAlert - Verify your email";
+    const subject = "Welcome to FaceAlert";
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to FaceAlert, ${name}!</h2>
         <p>Thank you for registering with FaceAlert.</p>
-        <p>Your account has been successfully created. We are excited to have you on board!</p>
-        <p>If you need any assistance, feel free to reach out to our support team.</p>
+        <p>Your account has been successfully created and verified. We are excited to have you on board!</p>
         <br>
         <p>Best regards,<br>The FaceAlert Team</p>
       </div>

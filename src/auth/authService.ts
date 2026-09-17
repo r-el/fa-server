@@ -1,4 +1,4 @@
-import { injectable, inject, delay } from "tsyringe";
+import { injectable, inject, delay, container } from "tsyringe";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { authConfig } from "@core/config/auth.js";
@@ -18,35 +18,59 @@ const BCRYPT_SALT_ROUNDS = authConfig.bcryptSaltRounds;
 const DEFAULT_TOKEN_EXPIRATION = authConfig.jwtExpiresIn;
 const JWT_SECRET = authConfig.jwtSecret;
 
+interface PendingVerification {
+  code: string;
+  expiresAt: number;
+  user: any;
+  token: string;
+}
+
+const verificationStore = new Map<string, PendingVerification>();
+
 @injectable()
 export class AuthService {
   private strategies: Map<string, IAuthStrategy> = new Map();
 
   constructor(
     @inject(delay(() => UserService)) private userService: UserService,
-    private localStrategy: LocalStrategy,
-    private googleStrategy: GoogleStrategy,
-    private emailService: EmailService
+    @inject(delay(() => LocalStrategy)) private localStrategy?: LocalStrategy,
+    @inject(delay(() => GoogleStrategy)) private googleStrategy?: GoogleStrategy,
+    private emailService?: EmailService
   ) {
-    // Register available strategies
-    this.strategies.set(this.localStrategy.strategyName, this.localStrategy);
-    this.strategies.set(this.googleStrategy.strategyName, this.googleStrategy);
+    if (this.localStrategy?.strategyName) {
+      this.strategies.set(this.localStrategy.strategyName, this.localStrategy);
+    }
+    if (this.googleStrategy?.strategyName) {
+      this.strategies.set(this.googleStrategy.strategyName, this.googleStrategy);
+    }
+    if (!this.emailService) {
+      this.emailService = container.resolve(EmailService);
+    }
+  }
+
+  private getStrategy(name: string): IAuthStrategy {
+    let strategy = this.strategies.get(name);
+    if (!strategy) {
+      if (name === "local") strategy = container.resolve(LocalStrategy);
+      if (name === "google") strategy = container.resolve(GoogleStrategy);
+      if (strategy) this.strategies.set(name, strategy);
+    }
+    if (!strategy) {
+      throw new ApiError(400, `Authentication strategy '${name}' is not supported`);
+    }
+    return strategy;
   }
 
   /**
    * Main entry point for Strategy-based authentication
    */
   async authenticateViaStrategy(strategyName: string, credentials: unknown) {
-    const strategy = this.strategies.get(strategyName);
-    if (!strategy) {
-      throw new ApiError(400, `Authentication strategy '${strategyName}' is not supported`);
-    }
+    const strategy = this.getStrategy(strategyName);
 
     const authResult = await strategy.authenticate(credentials);
 
     // Send welcome email if this is a newly created user (e.g. first time Google login)
-    if (authResult.isNewUser) {
-      // Don't await this, let it send in the background
+    if (authResult.isNewUser && this.emailService) {
       this.emailService.sendWelcomeEmail(authResult.email, authResult.name).catch((err) => {
         logger.error("Failed to send welcome email in background", { error: err });
       });
@@ -83,7 +107,7 @@ export class AuthService {
   }
 
   /**
-   * Register a new user (Local Registration)
+   * Register a new user (Local Registration) and send a 6-digit verification email.
    */
   async registerUser(username: string, password: string, name: string, email: string, role: string = "viewer") {
     const validatedData = validate({ username, password, name, email, role }, createUserSchema);
@@ -97,15 +121,79 @@ export class AuthService {
     // Create user
     const user = await this.userService.createUser(validatedData);
 
-    // Send welcome email asynchronously
-    this.emailService.sendWelcomeEmail(user.email!, user.name!).catch((err) => {
-      logger.error("Failed to send welcome email in background", { error: err });
-    });
-
     // Generate token
     const token = this.generateToken(user as any);
 
-    return { user, token };
+    // Generate real 6-digit verification code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationStore.set(email.toLowerCase(), {
+      code,
+      expiresAt: Date.now() + 15 * 60 * 1000,
+      user,
+      token,
+    });
+
+    console.log(`\n==================================================`);
+    console.log(`🔑 [VERIFICATION CODE] Generated for ${email}: ${code}`);
+    console.log(`==================================================\n`);
+
+    // Send real email with 6-digit verification code
+    this.emailService.sendVerificationCodeEmail(user.email!, user.name!, code).catch((err) => {
+      logger.error("Failed to send verification email in background", { error: err });
+    });
+
+    return { user, token, verificationRequired: true };
+  }
+
+  /**
+   * Verify the 6-digit email code
+   */
+  verifyCode(email: string, code: string) {
+    const pending = verificationStore.get(email.toLowerCase());
+    if (!pending) {
+      throw new ApiError(400, "No pending verification found for this email. Please request a new code.");
+    }
+
+    if (Date.now() > pending.expiresAt) {
+      verificationStore.delete(email.toLowerCase());
+      throw new ApiError(400, "Verification code has expired. Please request a new code.");
+    }
+
+    if (pending.code !== code.trim()) {
+      throw new ApiError(400, "Invalid verification code. Please check your email and try again.");
+    }
+
+    // Code verified successfully!
+    verificationStore.delete(email.toLowerCase());
+
+    // Send welcome confirmation email in background
+    this.emailService.sendWelcomeEmail(email, pending.user.name || "Operator").catch(() => {});
+
+    return {
+      user: pending.user,
+      token: pending.token,
+    };
+  }
+
+  /**
+   * Resend a fresh 6-digit verification code
+   */
+  async resendVerificationCode(email: string) {
+    const pending = verificationStore.get(email.toLowerCase());
+    if (!pending) {
+      throw new ApiError(404, "No registration session found for this email");
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    pending.code = code;
+    pending.expiresAt = Date.now() + 15 * 60 * 1000;
+
+    console.log(`\n==================================================`);
+    console.log(`🔑 [RESENT VERIFICATION CODE] for ${email}: ${code}`);
+    console.log(`==================================================\n`);
+
+    await this.emailService.sendVerificationCodeEmail(email, pending.user.name || "Operator", code);
+    return { success: true, message: "New verification code sent to your email" };
   }
 
   /**
