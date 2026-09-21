@@ -25,6 +25,7 @@ export default defineConfig({
       "@auth": path.resolve(__dirname, "./src/auth"),
       "@users": path.resolve(__dirname, "./src/users"),
       "@cameras": path.resolve(__dirname, "./src/cameras"),
+      "@vector": path.resolve(__dirname, "./src/vector"),
       "@events": path.resolve(__dirname, "./src/events"),
       "@dashboard": path.resolve(__dirname, "./src/dashboard"),
       "~types": path.resolve(__dirname, "./src/@types"),

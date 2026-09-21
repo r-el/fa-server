@@ -40,15 +40,31 @@ export class Camera {
    * @returns {Promise<Array>} Array of cameras
    */
   static async getCamerasByUserId(userId: string) {
-    // Get cameras created by user
+    const [createdCameras, assignedCameras] = await Promise.all([
+      Camera.getCreatedCamerasByUserId(userId),
+      Camera.getAssignedCamerasByUserId(userId),
+    ]);
+
+    const allCameras: any[] = [...createdCameras];
+    for (const assignedCamera of assignedCameras) {
+      if (!allCameras.find((camera) => camera.id === assignedCamera.id)) {
+        allCameras.push(assignedCamera);
+      }
+    }
+    return allCameras;
+  }
+
+  static async getCreatedCamerasByUserId(userId: string) {
     const { data: createdCameras, error: createdError } = await supabase
       .from("cameras")
       .select("*")
       .eq("created_by", userId);
 
     if (createdError) throw new Error(`Failed to get created cameras: ${createdError.message}`);
+    return createdCameras;
+  }
 
-    // Get cameras assigned to user
+  static async getAssignedCamerasByUserId(userId: string) {
     const { data: assignedCameras, error: assignedError } = await supabase
       .from("camera_user_assignments")
       .select(
@@ -67,16 +83,22 @@ export class Camera {
       .eq("user_id", userId);
 
     if (assignedError) throw new Error(`Failed to get assigned cameras: ${assignedError.message}`);
-
-    // Combine and deduplicate cameras
-    const allCameras: any[] = [...createdCameras];
-    const assignedCameraData: any[] = assignedCameras.map((item) => item.cameras);
-
-    assignedCameraData.forEach((assignedCamera) => {
-      if (!allCameras.find((camera) => camera.id === assignedCamera.id)) allCameras.push(assignedCamera);
+    return assignedCameras.flatMap((item) => {
+      if (Array.isArray(item.cameras)) return item.cameras;
+      return item.cameras ? [item.cameras] : [];
     });
+  }
 
-    return allCameras;
+  static async isAssigned(cameraId: string, userId: string) {
+    const { data, error } = await supabase
+      .from("camera_user_assignments")
+      .select("id")
+      .eq("camera_id", cameraId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to check camera assignment: ${error.message}`);
+    return Boolean(data);
   }
 
   /**

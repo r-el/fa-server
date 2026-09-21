@@ -15,9 +15,15 @@ import { AuthService } from "./authService.js";
  */
 export async function register(req: TypedRequest<typeof createUserSchema>, res: Response, next: NextFunction) {
   try {
-    const { username, password, name, email, role } = req.body;
+    const { username, password, name, email } = req.body;
 
-    const result = await container.resolve(AuthService).registerUser(username, password, name, email, role);
+    const result = await container.resolve(AuthService).registerUser(
+      username,
+      password,
+      name,
+      email,
+      "viewer",
+    );
 
     res.status(201).json({
       success: true,

@@ -2,10 +2,20 @@
 
 import { Camera } from "./cameraModel.js";
 
-import { injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+import {
+  canManageAssignments,
+  canManageCamera,
+  canViewCamera,
+  CameraAccessSubject,
+  CameraRole,
+} from "@cameras/domain/cameraAccess.js";
+import { CameraRepository } from "@cameras/domain/cameraRepository.js";
+import { CAMERA_REPOSITORY } from "@cameras/infrastructure/tokens.js";
 
 @injectable()
 export class CameraService {
+  constructor(@inject(CAMERA_REPOSITORY) private readonly cameraRepository: CameraRepository) {}
   /**
    * Create a new camera
    * @param {Object} cameraData - Camera data
@@ -19,7 +29,7 @@ export class CameraService {
       throw new Error("Insufficient permissions to create camera");
 
     try {
-      const camera = await Camera.create({ ...cameraData, created_by: userId });
+      const camera = await this.cameraRepository.create({ ...cameraData, created_by: userId });
 
       return camera;
     } catch (error) {
@@ -37,11 +47,9 @@ export class CameraService {
    */
   async getCamerasForUser(userId, userRole) {
     try {
-      if (userRole === "admin")
-        // Admin can see all cameras
-        return await Camera.getAllCameras();
-      // Operators and viewers see their own and assigned cameras
-      else return await Camera.getCamerasByUserId(userId);
+      if (userRole === "admin") return await this.cameraRepository.findAll();
+      if (userRole === "operator") return await this.cameraRepository.findCreatedBy(userId);
+      return await this.cameraRepository.findAssignedTo(userId);
     } catch (error) {
       throw new Error(`Failed to get cameras: ${error.message}`);
     }
@@ -56,10 +64,10 @@ export class CameraService {
    */
   async getCameraById(cameraId, userId, userRole) {
     try {
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
       // Check if user has access to this camera
-      if (!this.userHasAccessToCamera(camera, userId, userRole))
+      if (!(await this.userHasAccessToCamera(camera, userId, userRole)))
         throw new Error("Insufficient permissions to access this camera");
 
       return camera;
@@ -83,12 +91,12 @@ export class CameraService {
 
     try {
       // Check if camera exists and if assigner has access
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
-      if (assignerRole === "operator" && camera.created_by !== assignerId)
+      if (!canManageAssignments(camera, { id: assignerId, role: assignerRole as CameraRole }))
         throw new Error("Operators can only assign cameras they created");
 
-      const assignment = await Camera.assignToUser({
+      const assignment = await this.cameraRepository.assignToUser({
         camera_id: cameraId,
         user_id: targetUserId,
         assigned_by: assignerId,
@@ -117,12 +125,12 @@ export class CameraService {
 
     try {
       // Check if camera exists and if remover has access
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
-      if (removerRole === "operator" && camera.created_by !== removerId)
+      if (!canManageAssignments(camera, { id: removerId, role: removerRole as CameraRole }))
         throw new Error("Operators can only manage assignments for cameras they created");
 
-      return await Camera.removeAssignment(cameraId, targetUserId);
+      return await this.cameraRepository.removeAssignment(cameraId, targetUserId);
     } catch (error) {
       throw error;
     }
@@ -138,12 +146,12 @@ export class CameraService {
   async getCameraAssignments(cameraId, userId, userRole) {
     try {
       // Check if user has access to this camera
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
-      if (!this.userHasAccessToCamera(camera, userId, userRole))
+      if (!(await this.userHasAccessToCamera(camera, userId, userRole)))
         throw new Error("Insufficient permissions to view camera assignments");
 
-      return await Camera.getAssignments(cameraId);
+      return await this.cameraRepository.getAssignments(cameraId);
     } catch (error) {
       throw error;
     }
@@ -159,11 +167,11 @@ export class CameraService {
    */
   async updateCamera(cameraId, updateData, userId, userRole) {
     try {
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
       // Check permissions
-      if (userRole === "admin" || camera.created_by === userId)
-        return await Camera.update(cameraId, updateData);
+      if (canManageCamera(camera, { id: userId, role: userRole as CameraRole }))
+        return await this.cameraRepository.update(cameraId, updateData);
       else throw new Error("Insufficient permissions to update this camera");
     } catch (error) {
       if (error.message.includes("duplicate key")) throw new Error("Camera ID already exists");
@@ -181,10 +189,11 @@ export class CameraService {
    */
   async deleteCamera(cameraId, userId, userRole) {
     try {
-      const camera = await Camera.getById(cameraId);
+      const camera = await this.cameraRepository.findById(cameraId);
 
       // Check permissions
-      if (userRole === "admin" || camera.created_by === userId) return await Camera.delete(cameraId);
+      if (canManageCamera(camera, { id: userId, role: userRole as CameraRole }))
+        return await this.cameraRepository.delete(cameraId);
       else throw new Error("Insufficient permissions to delete this camera");
     } catch (error) {
       throw error;
@@ -198,16 +207,9 @@ export class CameraService {
    * @param {string} userRole - User role
    * @returns {boolean} Whether user has access
    */
-  userHasAccessToCamera(camera, userId, userRole) {
-    // Admin has access to all cameras
-    if (userRole === "admin") return true;
-
-    // User has access if they created the camera
-    if (camera.created_by === userId) return true;
-
-    // For assigned cameras, we would need to check assignments
-    // This is a simplified check - in practice, we might want to
-    // fetch assignments or include them in the camera query
-    return false;
+  async userHasAccessToCamera(camera, userId, userRole) {
+    const subject: CameraAccessSubject = { id: userId, role: userRole as CameraRole };
+    const isAssigned = userRole === "viewer" && (await this.cameraRepository.isAssigned(camera.id!, userId));
+    return canViewCamera(camera, subject, isAssigned);
   }
 }

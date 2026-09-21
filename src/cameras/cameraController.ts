@@ -197,7 +197,7 @@ export class CameraController {
     } catch (error) {
       logger.error("Assign camera error:", error);
       const statusCode = error.message.includes("permissions") ? 403 : 400;
-      res.status(500).json({
+      res.status(statusCode).json({
         success: false,
         message: error.message,
       });

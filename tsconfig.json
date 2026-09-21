@@ -23,6 +23,7 @@
       "@auth/*": ["./src/auth/*"],
       "@users/*": ["./src/users/*"],
       "@cameras/*": ["./src/cameras/*"],
+      "@vector/*": ["./src/vector/*"],
       "@events/*": ["./src/events/*"],
       "@dashboard/*": ["./src/dashboard/*"],
       "~types/*": ["./src/@types/*"]

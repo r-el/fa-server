@@ -22,6 +22,10 @@ export const supabaseConfig = {
   key: process.env.SUPABASE_KEY || "",
 };
 
+export const qdrantConfig = {
+  url: (process.env.QDRANT_URL || "http://127.0.0.1:6333").replace(/\/$/, ""),
+};
+
 // MinIO Configuration
 export const minioConfig = {
   endpoint: process.env.MINIO_ENDPOINT || 'localhost',
