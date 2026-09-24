@@ -37,6 +37,11 @@ export function cameraRoom(cameraId: string): string {
   return `camera:${cameraId}`;
 }
 
+/** Builds the Socket.IO room name for every user with a role. */
+export function roleRoom(role: string): string {
+  return `role:${role}`;
+}
+
 /**
  * Subscribes a newly connected socket to every camera the user is allowed
  * to access, and registers handlers for dynamic subscribe/unsubscribe.
@@ -48,8 +53,9 @@ export async function joinAuthorizedCameras(
   const { userId, role } = socket.data;
 
   try {
-    const cameras = await cameraService.getCamerasForUser(userId, role);
-    const cameraIds = cameras.map((c: any) => (c.specter_camera_id || c.id) as string);
+    await socket.join(roleRoom(role));
+    const cameras = await cameraService.listAccessibleCameras({ id: userId, role });
+    const cameraIds = cameras.map((camera) => camera.id);
 
     for (const id of cameraIds) {
       await socket.join(cameraRoom(id));
@@ -84,8 +90,8 @@ export function registerRoomHandlers(
 
     try {
       // Authorization: only join rooms the user is allowed to access
-      const cameras = await cameraService.getCamerasForUser(userId, role);
-      const allowedIds = new Set(cameras.map((c: any) => (c.specter_camera_id || c.id) as string));
+      const cameras = await cameraService.listAccessibleCameras({ id: userId, role });
+      const allowedIds = new Set(cameras.map((camera) => camera.id));
 
       const authorized = requestedIds.filter((id) => allowedIds.has(id));
 

@@ -31,6 +31,7 @@ type AppServer = SocketIOServer<
 >;
 
 let dispatcher: NotificationDispatcher | null = null;
+let io: AppServer | null = null;
 
 /**
  * Attaches Socket.IO to the HTTP server and returns the dispatcher
@@ -39,7 +40,7 @@ let dispatcher: NotificationDispatcher | null = null;
  * Call this once during server startup, after `app.listen()`.
  */
 export function initializeSocketServer(httpServer: HttpServer): NotificationDispatcher {
-  const io: AppServer = new SocketIOServer(httpServer, {
+  io = new SocketIOServer(httpServer, {
     cors: {
       origin: corsConfig.origin,
       methods: corsConfig.methods,
@@ -89,4 +90,11 @@ export function getNotificationDispatcher(): NotificationDispatcher {
     );
   }
   return dispatcher;
+}
+
+/** Disconnects every client and stops accepting connections. */
+export async function closeSocketServer(): Promise<void> {
+  await io?.close();
+  io = null;
+  dispatcher = null;
 }

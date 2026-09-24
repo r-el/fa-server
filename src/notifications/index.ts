@@ -12,8 +12,10 @@ export * as NotificationFactory from "./notificationFactory.js";
 export type {
   Notification,
   NotificationLevel,
-  UnauthorizedPersonNotification,
+  AlertNotification,
   CameraStatusNotification,
+  EnrollmentNotification,
+  ConfigurationChangedNotification,
   SystemNotification,
   ServerToClientEvents,
   ClientToServerEvents,
