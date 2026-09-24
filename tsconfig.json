@@ -26,6 +26,7 @@
       "@vector/*": ["./src/vector/*"],
       "@events/*": ["./src/events/*"],
       "@dashboard/*": ["./src/dashboard/*"],
+      "@notifications/*": ["./src/notifications/*"],
       "~types/*": ["./src/@types/*"]
     }
   },

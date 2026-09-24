@@ -76,3 +76,87 @@ export async function login(req: TypedRequest<typeof loginUserSchema>, res: Resp
     next(error);
   }
 }
+
+/**
+ * Authenticates a user via Google OAuth using an ID token.
+ *
+ * @route POST /auth/google
+ * @param {Request} req - Express Request object containing { idToken: string }
+ * @param {Response} res - Express Response object
+ * @param {NextFunction} next - Express Next function for error handling
+ */
+export async function googleLogin(req: any, res: Response, next: NextFunction) {
+  try {
+    const { idToken } = req.body;
+
+    const result = await container.resolve(AuthService).authenticateViaStrategy("google", { idToken });
+
+    res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data: {
+        user: {
+          id: result.user.id,
+          username: result.user.username,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+        },
+        token: result.token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Verifies a 6-digit email code
+ * @route POST /auth/verify-code
+ */
+export async function verifyEmailCode(req: any, res: Response, next: NextFunction) {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ success: false, error: "Email and 6-digit code are required" });
+    }
+
+    const result = container.resolve(AuthService).verifyCode(email, code);
+
+    res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+      data: {
+        user: {
+          id: result.user.id,
+          username: result.user.username,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+        },
+        token: result.token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Resends a 6-digit email verification code
+ * @route POST /auth/resend-code
+ */
+export async function resendEmailCode(req: any, res: Response, next: NextFunction) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    const result = await container.resolve(AuthService).resendVerificationCode(email);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
