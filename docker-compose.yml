@@ -4,18 +4,32 @@ services:
     ports:
       - "12113:12113"
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-production}
       PORT: 12113
       HOST: 0.0.0.0
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET through the deployment environment}
+      SUPABASE_URL: ${SUPABASE_URL:?Set SUPABASE_URL through the deployment environment}
+      SUPABASE_KEY: ${SUPABASE_KEY:?Set SUPABASE_KEY through the deployment environment}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      SPECTER_API_URL: http://api:8000
+      SPECTER_NATS_URL: nats://nats:4222
+      QDRANT_URL: http://qdrant:6333
+      SPECTER_OWNER_ID: ${SPECTER_OWNER_ID:-facealert}
+      SPECTER_API_TOKEN_FILE: /run/secrets/specter_api_token
       MONGODB_URI: mongodb://mongo:27017
       MONGODB_DB_NAME: face_identity
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_USE_SSL: "false"
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY through the deployment environment}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY through the deployment environment}
       MINIO_BUCKET_NAME: face-identity-photos
       MINIO_REGION: us-east-1
+    networks:
+      - default
+      - specter
+    secrets:
+      - specter_api_token
     depends_on:
       mongo:
         condition: service_healthy
@@ -41,11 +55,22 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?Set MINIO_ACCESS_KEY through the deployment environment}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?Set MINIO_SECRET_KEY through the deployment environment}
     volumes:
       - minio-data:/data
 
 volumes:
   mongo-data:
   minio-data:
+
+networks:
+  default:
+  specter:
+    external: true
+    name: ${SPECTER_NETWORK:-specter_default}
+
+secrets:
+  specter_api_token:
+    # Relative to this Compose file: server/../../.. is the Specter repository root.
+    file: ../../../deploy/secrets/api.token
