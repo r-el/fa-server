@@ -35,11 +35,11 @@ Create a `.env` file in the server directory:
 NODE_ENV=development
 
 # Server
-PORT=3001
+PORT=12113
 HOST=localhost
 
 # CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:12113
 
 # Database - Supabase (Required)
 SUPABASE_URL=your_supabase_url_here

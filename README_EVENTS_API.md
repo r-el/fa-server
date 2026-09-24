@@ -177,13 +177,13 @@ src/
 ### Manual Testing
 ```bash
 # Get events
-curl -H "Authorization: Bearer <token>" http://localhost:3000/events
+curl -H "Authorization: Bearer <token>" http://localhost:12113/events
 
 # Get statistics
-curl -H "Authorization: Bearer <token>" http://localhost:3000/events/stats
+curl -H "Authorization: Bearer <token>" http://localhost:12113/events/stats
 
 # Get specific event
-curl -H "Authorization: Bearer <token>" http://localhost:3000/events/{eventId}
+curl -H "Authorization: Bearer <token>" http://localhost:12113/events/{eventId}
 ```
 
 ## Error Handling

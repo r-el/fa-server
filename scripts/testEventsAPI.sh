@@ -11,7 +11,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:12113"
 TOKEN=""
 
 echo -e "${BLUE}🚀 Events API Test Script${NC}"

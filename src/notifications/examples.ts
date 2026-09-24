@@ -80,7 +80,7 @@ function handleCameraOffline(cameraId: string, cameraName: string) {
 import { io, Socket } from "socket.io-client";
 
 function connectToNotifications(token: string) {
-  const socket = io("http://localhost:3000", {
+  const socket = io("http://localhost:12113", {
     auth: { token: `Bearer ${token}` },
     transports: ["websocket"],
   });

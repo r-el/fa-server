@@ -26,9 +26,9 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Provide environment variables (defaults that can be overridden by docker-compose)
-ENV PORT=3001
+ENV PORT=12113
 ENV NODE_ENV=production
 
-EXPOSE 3001
+EXPOSE 12113
 
 CMD ["node", "dist/index.js"]
