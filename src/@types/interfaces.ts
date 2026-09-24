@@ -11,15 +11,48 @@ export interface IUser {
     updated_at?: Date | string;
 }
 
+export type CameraLiveStatus = "starting" | "running" | "reconnecting" | "stopped" | "failed";
+
+/** A Specter camera as fa shows it; Specter keeps it, fa adds who created it and where it is. */
 export interface ICamera {
-    id?: string;
+    id: string;
     name: string;
-    connection_string: string;
-    created_by?: string;
-    specter_camera_id?: string | null;
-    organization_id?: string | null;
-    created_at?: Date | string;
-    updated_at?: Date | string;
+    source_url: string;
+    username: string | null;
+    has_password: boolean;
+    location: string | null;
+    created_by: string | null;
+    watchlist_ids: string[];
+    detection_classes: string[];
+    is_enabled: boolean;
+    desired_state: "running" | "stopped";
+    live_status: CameraLiveStatus | null;
+}
+
+export interface ICameraCredentials {
+    username: string;
+    password: string;
+}
+
+export interface ICameraCreate {
+    name: string;
+    source_url: string;
+    credentials: ICameraCredentials | null;
+    location: string | null;
+    created_by: string;
+    watchlist_ids: string[];
+    detection_classes: string[];
+}
+
+export interface ICameraChanges {
+    name?: string;
+    source_url?: string;
+    // null removes the stored credentials.
+    credentials?: ICameraCredentials | null;
+    location?: string | null;
+    watchlist_ids?: string[];
+    detection_classes?: string[];
+    is_enabled?: boolean;
 }
 
 export interface IEvent {
@@ -35,7 +68,7 @@ export interface IEvent {
 
 export interface ICameraAssignment {
     id?: string;
-    camera_id: string;  // This is the Supabase UUID (cameras.id), not the old text identifier
+    camera_id: string;  // The Specter camera id
     user_id: string;
     assigned_by?: string;
     assigned_at?: Date | string;
