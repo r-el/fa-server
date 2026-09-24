@@ -42,6 +42,36 @@ async createUser(userData) {
   return new User(data);
 }
 
+/**
+ * Creates a user from Google OAuth.
+ * Generates a random secure password since they authenticate via Google.
+ */
+async createGoogleUser(userData: { username: string; name: string; email: string; role: string; google_id: string }) {
+  // Generate a random 32-character password for Google users
+  const randomPassword = Array(32)
+    .fill(null)
+    .map(() => Math.round(Math.random() * 36).toString(36))
+    .join('');
+    
+  const hashedPassword = await hashPassword(randomPassword);
+
+  const dbUserData = {
+    username: userData.username,
+    name: userData.name,
+    email: userData.email,
+    role: userData.role,
+    password: hashedPassword,
+    // Note: If you add `google_id` to Supabase `users` table, you can pass it here.
+    // For now we map them by email.
+  };
+
+  const { data, error } = await supabase.from("users").insert(dbUserData).select().single();
+
+  if (error) throw new Error(`Database error: ${error.message}`);
+
+  return new User(data);
+}
+
 async getUserByEmail(email) {
   const validatedEmail = validate(email, emailSchema);
 

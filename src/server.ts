@@ -10,7 +10,9 @@ import { globalErrorHandler } from "./core/middlewares/errorHandler.js";
 const app = express();
 
 // Security
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.disable("x-powered-by");
 
 // CORS
