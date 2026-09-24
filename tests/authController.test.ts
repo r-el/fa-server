@@ -3,10 +3,21 @@ import { AuthService } from '@auth/authService.js';
 import { describe, it, expect, vi } from 'vitest';
 import { register, login } from '@auth/authController.js';
 import * as authService from '@auth/authService.js';
+import { createUserSchema } from '@users/userSchemas.js';
 
 vi.mock("@auth/authService.js", () => ({ AuthService: class { registerUser: any = vi.fn(); loginUser: any = vi.fn(); } }));
 
 describe('Auth Controller', () => {
+  it('should allow usernames with underscores', () => {
+    expect(() => createUserSchema.parse({
+      username: 'demo_user',
+      password: 'password123',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'viewer'
+    })).not.toThrow();
+  });
+
   it('should successfully register a user and return a token', async () => {
     const req = {
       body: {

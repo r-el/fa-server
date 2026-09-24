@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 const baseSchemas = {
-  username: z.string().regex(/^[a-zA-Z0-9]+$/, "Username must contain only alphanumeric characters")
+  username: z.string().regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens")
     .min(3, "Username must be at least 3 characters long")
     .max(30, "Username cannot exceed 30 characters"),
 
