@@ -6,11 +6,6 @@ export const createCameraSchema = z.object({
     .min(1, "Camera name must be at least 1 character")
     .max(100, "Camera name must not exceed 100 characters"),
 
-  camera_id: z.string().trim()
-    .min(1, "Camera ID must be at least 1 character")
-    .max(50, "Camera ID must not exceed 50 characters")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Camera ID can only contain letters, numbers, underscores, and hyphens"),
-
   connection_string: z.string().trim()
     .min(1, "Connection string must be at least 1 character")
     .max(500, "Connection string must not exceed 500 characters"),
@@ -21,12 +16,6 @@ export const updateCameraSchema = z.object({
   name: z.string().trim()
     .min(1, "Camera name must be at least 1 character")
     .max(100, "Camera name must not exceed 100 characters")
-    .optional(),
-
-  camera_id: z.string().trim()
-    .min(1, "Camera ID must be at least 1 character")
-    .max(50, "Camera ID must not exceed 50 characters")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Camera ID can only contain letters, numbers, underscores, and hyphens")
     .optional(),
 
   connection_string: z.string().trim()

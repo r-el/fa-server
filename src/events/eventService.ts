@@ -37,8 +37,8 @@ export class EventService {
         };
       }
 
-      // Extract camera IDs
-      const cameraIds = cameras.map(camera => camera.camera_id);
+      // Extract camera IDs (specter_camera_id or database id)
+      const cameraIds = cameras.map(camera => camera.specter_camera_id || camera.id);
 
       // Get events for these cameras
       return await Event.getEventsByCameraIds(cameraIds, options);
@@ -126,7 +126,7 @@ export class EventService {
         };
       }
 
-      const cameraIds = cameras.map(camera => camera.camera_id);
+      const cameraIds = cameras.map(camera => camera.specter_camera_id || camera.id);
 
       // Get statistics
       const [totalEvents, levelStats] = await Promise.all([
@@ -154,7 +154,7 @@ export class EventService {
   async userHasAccessToCamera(userId, userRole, cameraId) {
     try {
       const cameras = await this.cameraService.getCamerasForUser(userId, userRole);
-      return cameras.some(camera => camera.camera_id === cameraId);
+      return cameras.some(camera => camera.specter_camera_id === cameraId || camera.id === cameraId);
     } catch (error) {
       logger.error("Error checking camera access:", error);
       return false;
@@ -178,7 +178,11 @@ export class EventService {
 
       // Get user cameras for reference
       const cameras = await this.cameraService.getCamerasForUser(userId, userRole);
-      const cameraMap = new Map(cameras.map(camera => [camera.camera_id, camera]));
+      const cameraMap = new Map();
+      cameras.forEach(camera => {
+        if (camera.specter_camera_id) cameraMap.set(camera.specter_camera_id, camera);
+        if (camera.id) cameraMap.set(camera.id, camera);
+      });
 
       // Enhance events with camera information
       const enhancedEvents = eventsData.events.map(event => ({

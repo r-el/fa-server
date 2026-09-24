@@ -49,7 +49,7 @@ export async function joinAuthorizedCameras(
 
   try {
     const cameras = await cameraService.getCamerasForUser(userId, role);
-    const cameraIds = cameras.map((c: any) => c.camera_id as string);
+    const cameraIds = cameras.map((c: any) => (c.specter_camera_id || c.id) as string);
 
     for (const id of cameraIds) {
       await socket.join(cameraRoom(id));
@@ -85,7 +85,7 @@ export function registerRoomHandlers(
     try {
       // Authorization: only join rooms the user is allowed to access
       const cameras = await cameraService.getCamerasForUser(userId, role);
-      const allowedIds = new Set(cameras.map((c: any) => c.camera_id as string));
+      const allowedIds = new Set(cameras.map((c: any) => (c.specter_camera_id || c.id) as string));
 
       const authorized = requestedIds.filter((id) => allowedIds.has(id));
 

@@ -21,9 +21,10 @@ export class Camera {
       .insert([
         {
           name: cameraData.name,
-          camera_id: cameraData.camera_id,
           connection_string: cameraData.connection_string,
           created_by: cameraData.created_by,
+          organization_id: cameraData.organization_id,
+          specter_camera_id: cameraData.specter_camera_id,
         },
       ])
       .select()
@@ -72,8 +73,9 @@ export class Camera {
         cameras (
           id,
           name,
-          camera_id,
+          specter_camera_id,
           connection_string,
+          organization_id,
           created_by,
           created_at,
           updated_at

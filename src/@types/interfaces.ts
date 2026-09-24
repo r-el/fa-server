@@ -13,10 +13,11 @@ export interface IUser {
 
 export interface ICamera {
     id?: string;
-    camera_id: string;
     name: string;
     connection_string: string;
     created_by?: string;
+    specter_camera_id?: string | null;
+    organization_id?: string | null;
     created_at?: Date | string;
     updated_at?: Date | string;
 }
@@ -34,7 +35,7 @@ export interface IEvent {
 
 export interface ICameraAssignment {
     id?: string;
-    camera_id: string;
+    camera_id: string;  // This is the Supabase UUID (cameras.id), not the old text identifier
     user_id: string;
     assigned_by?: string;
     assigned_at?: Date | string;
