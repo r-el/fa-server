@@ -21,15 +21,15 @@ class ApiError extends Error {
   }
 }
 
-type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+type AsyncHandler<Req = Request> = (req: Req, res: Response, next: NextFunction) => Promise<void | any>;
 
 /**
  * Async error wrapper
  * Catches async errors and passes them to error handler
  */
-const catchAsync = (fn: AsyncHandler) =>
+const catchAsync = <Req = Request>(fn: AsyncHandler<Req>) =>
   (req: Request, res: Response, next: NextFunction) =>
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req as unknown as Req, res, next)).catch(next);
 
 /**
  * Global error handling middleware

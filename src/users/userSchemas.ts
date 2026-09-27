@@ -33,8 +33,42 @@ const loginUserSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const getUserSchema = z.object({
+  params: z.object({ id: baseSchemas.userId }),
+});
+
+export const getAllUsersSchema = z.object({
+  query: z.object({
+    role: z.string().optional(),
+  }),
+});
+
+export const createUserRequestSchema = z.object({
+  body: createUserSchema,
+});
+
+export const updateUserRequestSchema = z.object({
+  params: z.object({ id: baseSchemas.userId }),
+  body: z.object({
+    username: baseSchemas.username.optional(),
+    password: baseSchemas.password.optional(),
+    name: baseSchemas.name.optional(),
+    email: baseSchemas.email.optional(),
+    role: z.enum(["admin", "operator", "viewer"]).optional(),
+  }),
+});
+
+export const deleteUserSchema = getUserSchema;
+
 const userIdSchema = baseSchemas.userId;
 const usernameSchema = baseSchemas.username;
 const emailSchema = baseSchemas.email;
 
-export { createUserSchema, loginUserSchema, userIdSchema, usernameSchema, emailSchema, baseSchemas };
+export {
+  createUserSchema,
+  loginUserSchema,
+  userIdSchema,
+  usernameSchema,
+  emailSchema,
+  baseSchemas,
+};

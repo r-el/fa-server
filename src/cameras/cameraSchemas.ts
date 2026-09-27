@@ -23,47 +23,64 @@ const watchlistIdsSchema = z.array(specterIdSchema("Watchlist")).max(50);
 // COCO class names such as person or car; empty means every class.
 const detectionClassesSchema = z.array(z.string().trim().min(1).max(50)).max(80);
 
-// Camera creation schema
-export const createCameraSchema = z.object({
-  name: nameSchema,
-  source_url: sourceUrlSchema,
-  credentials: credentialsSchema.optional(),
-  location: locationSchema.optional(),
-  watchlist_ids: watchlistIdsSchema.default([]),
-  detection_classes: detectionClassesSchema.default([]),
-});
-
-// Camera update schema (all fields optional)
-export const updateCameraSchema = z.object({
-  name: nameSchema.optional(),
-  source_url: sourceUrlSchema.optional(),
-  credentials: credentialsSchema.nullable().optional(),
-  location: locationSchema.nullable().optional(),
-  watchlist_ids: watchlistIdsSchema.optional(),
-  detection_classes: detectionClassesSchema.optional(),
-  is_enabled: z.boolean().optional(),
-}).refine(data => Object.keys(data).length > 0, {
-  message: "At least one field must be provided for update"
-});
-
-// Camera assignment schema
-export const assignCameraSchema = z.object({
-  user_id: z.string().uuid("User ID must be a valid UUID"),
-});
-
-// Camera ID parameter schema
-export const cameraIdSchema = z.object({
+const cameraParams = z.object({
   camera_id: specterIdSchema("Camera"),
 });
 
-export const cameraAssignmentParamsSchema = cameraIdSchema.extend({
-  user_id: z.string().uuid("User ID must be a valid UUID"),
+export const getCameraSchema = z.object({
+  params: cameraParams,
 });
 
-export const zoneParamsSchema = cameraIdSchema.extend({
-  zone_id: specterIdSchema("Zone"),
+export const createCameraSchema = z.object({
+  body: z.object({
+    name: nameSchema,
+    source_url: sourceUrlSchema,
+    credentials: credentialsSchema.optional(),
+    location: locationSchema.optional(),
+    watchlist_ids: watchlistIdsSchema.default([]),
+    detection_classes: detectionClassesSchema.default([]),
+  }),
 });
 
-export const ruleParamsSchema = cameraIdSchema.extend({
-  rule_id: specterIdSchema("Rule"),
+export const updateCameraSchema = z.object({
+  params: cameraParams,
+  body: z.object({
+    name: nameSchema.optional(),
+    source_url: sourceUrlSchema.optional(),
+    credentials: credentialsSchema.nullable().optional(),
+    location: locationSchema.nullable().optional(),
+    watchlist_ids: watchlistIdsSchema.optional(),
+    detection_classes: detectionClassesSchema.optional(),
+    is_enabled: z.boolean().optional(),
+  }).refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  }),
 });
+
+export const assignCameraSchema = z.object({
+  params: cameraParams,
+  body: z.object({
+    user_id: z.string().uuid("User ID must be a valid UUID"),
+  }),
+});
+
+export const removeCameraAssignmentSchema = z.object({
+  params: cameraParams.extend({
+    user_id: z.string().uuid("User ID must be a valid UUID"),
+  }),
+});
+
+export const zoneParamsSchema = z.object({
+  params: cameraParams.extend({
+    zone_id: specterIdSchema("Zone"),
+  }),
+});
+
+export const ruleParamsSchema = z.object({
+  params: cameraParams.extend({
+    rule_id: specterIdSchema("Rule"),
+  }),
+});
+
+export const cameraIdSchema = getCameraSchema;
+export const cameraAssignmentParamsSchema = removeCameraAssignmentSchema;

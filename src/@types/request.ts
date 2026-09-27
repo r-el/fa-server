@@ -12,16 +12,25 @@ export interface JwtUser {
   role: "admin" | "operator" | "viewer";
 }
 
-/**
- * Express Request extended with an authenticated user and relaxed body/params/query
- * so controllers can destructure freely after validation middleware has run.
- *
- * When a Zod schema generic is supplied, body/params/query are inferred from it.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TypedRequest<T extends AnyZodObject = any> = Request<
-      Record<string, string>,
-      any,   // ResBody — not relevant for typing
-      T extends AnyZodObject ? z.infer<T> : any,
-      Record<string, any>
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+type SafeExtract<T, K extends string, Fallback> = K extends keyof T
+  ? [T[K]] extends [never]
+    ? Fallback
+    : [T[K]] extends [undefined]
+    ? Fallback
+    : T[K]
+  : Fallback;
+
+type InferredOrRaw<T> = T extends ZodTypeAny ? z.infer<T> : T;
+
+export type TypedRequest<T = any> = Prettify<
+  Request<
+    SafeExtract<InferredOrRaw<T>, "params", Record<string, string>>,
+    unknown,
+    SafeExtract<InferredOrRaw<T>, "body", any>,
+    SafeExtract<InferredOrRaw<T>, "query", Record<string, any>>
+  >
 > & { user: JwtUser };
+
