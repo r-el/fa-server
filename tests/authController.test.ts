@@ -57,7 +57,9 @@ describe('Auth Controller', () => {
   });
 
   it('should call next with error if registration fails', async () => {
-    const req = { body: {} } as any;
+    const req = {
+      body: { username: 'testuser', password: 'password123', name: 'Test', email: 'test@example.com' }
+    } as any;
     const res = {} as any;
     const next = vi.fn();
 
