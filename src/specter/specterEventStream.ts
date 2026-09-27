@@ -54,19 +54,8 @@ export class SpecterEventStream {
   }
 
   private async run(): Promise<void> {
-    try {
-      this.connection = await connect({
-        servers: this.config.natsUrl,
-        name: "fa-server",
-        waitOnFirstConnect: true,
-        maxReconnectAttempts: -1,
-      });
-    } catch (error) {
-      logger.error("Cannot connect to Specter's NATS server", { error: error?.message });
-      return;
-    }
-    if (this.isStopped) {
-      await this.connection.close();
+    this.connection = await this.connectWithRetry();
+    if (this.connection === null) {
       return;
     }
     logger.info("Connected to Specter's NATS server", { servers: this.config.natsUrl });
@@ -94,6 +83,29 @@ export class SpecterEventStream {
       },
     ];
     await Promise.all(subscriptions.map((subscription) => this.follow(subscription)));
+  }
+
+  private async connectWithRetry(): Promise<NatsConnection | null> {
+    let retryDelayMs = INITIAL_RETRY_DELAY_MS;
+    while (!this.isStopped) {
+      try {
+        return await connect({
+          servers: this.config.natsUrl,
+          name: "fa-server",
+          waitOnFirstConnect: true,
+          maxReconnectAttempts: -1,
+        });
+      } catch (error) {
+        if (this.isStopped) return null;
+        logger.warn("Cannot connect to Specter's NATS server, retrying", {
+          retryDelayMs,
+          error: error?.message,
+        });
+        await sleep(retryDelayMs);
+        retryDelayMs = Math.min(retryDelayMs * 2, MAXIMUM_RETRY_DELAY_MS);
+      }
+    }
+    return null;
   }
 
   private async follow(subscription: StreamSubscription): Promise<void> {
