@@ -22,8 +22,8 @@ export function setupSwagger(app: Express) {
     openapi: '3.0.0',
     info: {
       version: '1.0.0',
-      title: 'FaceAlert Backend API',
-      description: 'API for FaceAlert Dashboard and Services',
+      title: 'Specter Backend API',
+      description: 'API for Specter Dashboard and Services',
     },
     servers: [{ url: '/api' }],
   });

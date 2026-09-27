@@ -63,11 +63,11 @@ export class EmailService {
    * Sends an email with a 6-digit verification code.
    */
   async sendVerificationCodeEmail(toEmail: string, name: string, code: string): Promise<boolean> {
-    const subject = `FaceAlert - Your Verification Code: ${code}`;
+    const subject = `Specter - Your Verification Code: ${code}`;
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; color: #1e293b;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: #0284c7; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.5px;">FaceAlert Security</h1>
+          <h1 style="color: #0284c7; font-size: 24px; margin: 0; font-weight: 700; letter-spacing: -0.5px;">Specter Security</h1>
           <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Command Center Email Verification</p>
         </div>
         <p style="font-size: 15px; line-height: 1.6;">Hello <strong>${name}</strong>,</p>
@@ -86,7 +86,7 @@ export class EmailService {
     return this.sendEmail({
       to: toEmail,
       subject,
-      text: `Your FaceAlert verification code is: ${code}`,
+      text: `Your Specter verification code is: ${code}`,
       html,
     });
   }
@@ -95,14 +95,14 @@ export class EmailService {
    * Sends a welcome email to a newly registered user.
    */
   async sendWelcomeEmail(toEmail: string, name: string): Promise<boolean> {
-    const subject = "Welcome to FaceAlert";
+    const subject = "Welcome to Specter";
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Welcome to FaceAlert, ${name}!</h2>
-        <p>Thank you for registering with FaceAlert.</p>
+        <h2>Welcome to Specter, ${name}!</h2>
+        <p>Thank you for registering with Specter.</p>
         <p>Your account has been successfully created and verified. We are excited to have you on board!</p>
         <br>
-        <p>Best regards,<br>The FaceAlert Team</p>
+        <p>Best regards,<br>The Specter Team</p>
       </div>
     `;
 
@@ -117,13 +117,13 @@ export class EmailService {
    * (Placeholder) Sends a security alert email.
    */
   async sendSecurityAlert(toEmail: string, cameraName: string, details: string): Promise<boolean> {
-    const subject = `FaceAlert Security Alert: ${cameraName}`;
+    const subject = `Specter Security Alert: ${cameraName}`;
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <h2 style="color: #e53e3e;">Security Alert Triggered</h2>
         <p>An event was detected on camera <strong>${cameraName}</strong>.</p>
         <p><strong>Details:</strong> ${details}</p>
-        <p>Please log in to the FaceAlert dashboard to review this alert.</p>
+        <p>Please log in to the Specter dashboard to review this alert.</p>
       </div>
     `;
 

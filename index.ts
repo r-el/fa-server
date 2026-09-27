@@ -42,7 +42,7 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 // Start server after init dbs
 async function startServer(): Promise<void> {
   try {
-    logger.info("Starting Face Alert Server");
+    logger.info("Starting Specter Server");
 
     // Test Supabase connection
     console.log("Testing Supabase connection...");
@@ -59,7 +59,7 @@ async function startServer(): Promise<void> {
     }
 
     httpServer = app.listen(PORT, HOST, () => {
-      logger.info("FaceAlert server started", { host: HOST, port: PORT, environment: serverConfig.environment });
+      logger.info("Specter server started", { host: HOST, port: PORT, environment: serverConfig.environment });
     });
     const dispatcher = initializeSocketServer(httpServer);
     attachLiveVideoRelay(

@@ -39,7 +39,7 @@ describe("E2E: Email Delivery", () => {
     const receivedEmail = await testmailClient.waitForEmail(tag);
     
     expect(receivedEmail).toBeDefined();
-    expect(receivedEmail?.subject).toContain("Welcome to FaceAlert");
+    expect(receivedEmail?.subject).toContain("Welcome to Specter");
     expect(receivedEmail?.html).toContain(testUserName);
     expect(receivedEmail?.to).toBe(targetEmail);
   }, 60000); // 60 seconds timeout to allow for network / delivery delays

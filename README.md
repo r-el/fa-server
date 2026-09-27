@@ -1,4 +1,4 @@
-# FaceAlert Server
+# Specter Server
 
 ## Installation and Setup
 
@@ -93,7 +93,7 @@ Basic connection test
 ```json
 {
   "success": true,
-  "message": "Welcome to FaceAlert Server!"
+  "message": "Welcome to Specter Server!"
 }
 ```
 
