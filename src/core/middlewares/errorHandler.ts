@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 import logger from "@core/utils/logger.js";
 import { serverConfig } from "@core/config/server.js";
 
@@ -20,22 +21,25 @@ class ApiError extends Error {
   }
 }
 
+type AsyncHandler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+
 /**
  * Async error wrapper
  * Catches async errors and passes them to error handler
  */
-const catchAsync = (fn: any) => (req: any, res: any, next: any) => Promise.resolve(fn(req, res, next)).catch(next);
+const catchAsync = (fn: AsyncHandler) =>
+  (req: Request, res: Response, next: NextFunction) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 
 /**
  * Global error handling middleware
  */
-const globalErrorHandler = (err: any, req: any, res: any, next: any) => {
-  let error = { ...err };
-  error.message = err.message || err.toString();
+const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  const message = err.message || String(err);
 
   // Log error
   logger.error(`${new Date().toISOString()} - ERROR:`, {
-    message: error.message,
+    message,
     stack: err.stack,
     url: req.originalUrl,
     method: req.method,
@@ -44,7 +48,7 @@ const globalErrorHandler = (err: any, req: any, res: any, next: any) => {
 
   res.status(err.statusCode || 500).json({
     success: false,
-    error: error.message || "Internal server error",
+    error: message || "Internal server error",
     ...(err.errors && { errors: err.errors }),
     ...(ENVIRONMENT === "development" && { stack: err.stack }),
   });

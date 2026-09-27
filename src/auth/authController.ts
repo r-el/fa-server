@@ -1,12 +1,13 @@
 import { Response } from "express";
 import { TypedRequest } from "~types/request.js";
+import { IUser } from "~types/interfaces.js";
 import { container } from "@core/di.js";
 import { catchAsync } from "@core/middlewares/errorHandler.js";
 import { AuthService } from "./authService.js";
 
 const authService = () => container.resolve(AuthService);
 
-function formatAuthUser(user: any) {
+function formatAuthUser(user: IUser) {
   return {
     id: user.id,
     username: user.username,

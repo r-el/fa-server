@@ -10,9 +10,12 @@ import { SPECTER_EVENT_STREAM, SPECTER_HTTP_CLIENT } from "@specter/tokens.js";
 import type { SpecterEventStream } from "@specter/specterEventStream.js";
 import type { SpecterHttpClient } from "@specter/specterHttpClient.js";
 
+import { Response } from "express";
+import { TypedRequest } from "~types/request.js";
+
 const router = express.Router();
 
-router.get("/stats", authenticateToken, catchAsync(async (req: any, res: any) => {
+router.get("/stats", authenticateToken, catchAsync(async (req: TypedRequest, res: Response) => {
   const startOfTodayUtc = new Date();
   startOfTodayUtc.setUTCHours(0, 0, 0, 0);
 

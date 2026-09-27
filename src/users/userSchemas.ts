@@ -14,8 +14,8 @@ const baseSchemas = {
   email: z.string().email("Please enter a valid email address").toLowerCase(),
 
   role: z.enum(["admin", "operator", "viewer"], {
-    errorMap: () => ({ message: "Role must be admin, operator, or viewer" })
-  } as any).default("viewer"),
+    message: "Role must be admin, operator, or viewer",
+  }).default("viewer"),
 
   userId: z.string().uuid("Invalid user ID format"),
 };

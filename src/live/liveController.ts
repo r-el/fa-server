@@ -23,6 +23,6 @@ export class LiveController {
     const frame = await specter.fetchOwnerResource(`cameras/${camera_id}/live/frame.jpeg`);
     res.setHeader("Content-Type", frame.headers.get("Content-Type") ?? "image/jpeg");
     res.setHeader("Cache-Control", "no-store");
-    Readable.fromWeb(frame.body as any).pipe(res);
+    Readable.fromWeb(frame.body as import("node:stream/web").ReadableStream).pipe(res);
   });
 }

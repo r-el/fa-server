@@ -1,21 +1,23 @@
 import { Readable } from "node:stream";
 import { Response } from "express";
+import { z } from "zod";
 import { container } from "@core/di.js";
 import { catchAsync } from "@core/middlewares/errorHandler.js";
 import { TypedRequest } from "~types/request.js";
 import { AlertService } from "./alertService.js";
+import { listAlertsQuerySchema, alertSummaryQuerySchema } from "./alertSchemas.js";
 
 const alertService = () => container.resolve(AlertService);
 
 export class AlertController {
   static listAlerts = catchAsync(async (req: TypedRequest, res: Response) => {
-    const { camera_id, ...query } = req.query as any;
+    const { camera_id, ...query } = req.query as z.infer<typeof listAlertsQuerySchema>;
     const page = await alertService().listAlerts({ ...query, camera_ids: camera_id }, req.user);
     res.json({ success: true, data: page });
   });
 
   static summarizeAlerts = catchAsync(async (req: TypedRequest, res: Response) => {
-    const { camera_id, ...query } = req.query as any;
+    const { camera_id, ...query } = req.query as z.infer<typeof alertSummaryQuerySchema>;
     const summary = await alertService().summarizeAlerts({ ...query, camera_ids: camera_id }, req.user);
     res.json({ success: true, data: summary });
   });
@@ -38,6 +40,6 @@ export class AlertController {
     res.setHeader("Content-Type", snapshot.contentType);
     // Faces of real people: never kept by shared caches.
     res.setHeader("Cache-Control", "private, max-age=3600");
-    Readable.fromWeb(snapshot.body as any).pipe(res);
+    Readable.fromWeb(snapshot.body as import("node:stream/web").ReadableStream).pipe(res);
   });
 }

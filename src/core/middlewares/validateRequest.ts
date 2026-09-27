@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import { ZodTypeAny } from "zod";
 import { validate } from "@core/validationService.js";
 
@@ -15,9 +16,11 @@ export function v(schemas: {
   params?: ZodTypeAny;
   query?: ZodTypeAny;
 }) {
-  return (req: any, res: any, next: any) => {
-    if (schemas.params) req.params = validate(req.params, schemas.params);
-    if (schemas.query) req.query = validate(req.query, schemas.query);
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Zod returns typed objects; we write them back so downstream handlers get clean data.
+    // The `as` casts are safe because the middleware sits between Express parsing and handlers.
+    if (schemas.params) req.params = validate(req.params, schemas.params) as typeof req.params;
+    if (schemas.query) req.query = validate(req.query, schemas.query) as typeof req.query;
     if (schemas.body) req.body = validate(req.body, schemas.body);
     next();
   };

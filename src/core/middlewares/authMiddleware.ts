@@ -2,24 +2,34 @@
  * Authentication Middleware
  * JWT token verification middleware
  */
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { ApiError } from "./errorHandler.js";
 import { authConfig } from "../config/auth.js";
+import { JwtUser } from "~types/request.js";
+
+interface JwtPayload {
+  id: string;
+  username: string;
+  name: string;
+  email: string;
+  role: "admin" | "operator" | "viewer";
+}
 
 /**
  * Middleware to authenticate JWT token
  * Adds user data to req.user if token is valid
  */
-export function authenticateToken(req: any, res: any, next: any) {
+export function authenticateToken(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
 
     if (!token) throw new ApiError(401, "Access token required");
 
-    const decoded = jwt.verify(token, authConfig.jwtSecret) as any;
+    const decoded = jwt.verify(token, authConfig.jwtSecret) as JwtPayload;
 
-    req.user = {
+    (req as Request & { user: JwtUser }).user = {
       id: decoded.id,
       username: decoded.username,
       name: decoded.name,
@@ -40,15 +50,14 @@ export function authenticateToken(req: any, res: any, next: any) {
  * Use after authenticateToken middleware
  */
 export function requireRole(roles: string | string[]) {
-  return (req: any, res: any, next: any) => {
-    if (!req.user) return next(new ApiError(401, "Authentication required"));
-
-    const userRole = req.user.role;
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as Request & { user?: JwtUser }).user;
+    if (!user) return next(new ApiError(401, "Authentication required"));
 
     // Convert single role to array
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
 
-    if (!allowedRoles.includes(userRole)) return next(new ApiError(403, "Insufficient permissions"));
+    if (!allowedRoles.includes(user.role)) return next(new ApiError(403, "Insufficient permissions"));
 
     next();
   };
@@ -59,18 +68,18 @@ export function requireRole(roles: string | string[]) {
  * Users can only access their own resources unless they are admin
  * Use after authenticateToken middleware
  */
-export function canAccessUser(req: any, res: any, next: any) {
+export function canAccessUser(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.user) return next(new ApiError(401, "Authentication required"));
+    const user = (req as Request & { user?: JwtUser }).user;
+    if (!user) return next(new ApiError(401, "Authentication required"));
 
     const targetUserId = req.params.id;
-    const currentUser = req.user;
 
     // Admin can access any user resource
-    if (currentUser.role === "admin") return next();
+    if (user.role === "admin") return next();
 
     // Regular users can only access their own resources
-    if (currentUser.id !== targetUserId)
+    if (user.id !== targetUserId)
       return next(new ApiError(403, "Forbidden: You can only access your own profile"));
 
     next();
@@ -84,13 +93,15 @@ export function canAccessUser(req: any, res: any, next: any) {
  * admin → can create any role; operator → viewer only.
  * Use after authenticateToken and requireRole middlewares.
  */
-export function requireCreationRole(req: any, res: any, next: any) {
-  const actor = req.user;
+export function requireCreationRole(req: Request, res: Response, next: NextFunction) {
+  const user = (req as Request & { user?: JwtUser }).user;
   const targetRole = req.body?.role ?? "viewer";
 
-  if (actor.role === "admin") return next();
+  if (!user) return next(new ApiError(401, "Authentication required"));
 
-  if (actor.role === "operator" && targetRole === "viewer") return next();
+  if (user.role === "admin") return next();
 
-  next(new ApiError(403, `${actor.role} cannot create ${targetRole} accounts`));
+  if (user.role === "operator" && targetRole === "viewer") return next();
+
+  next(new ApiError(403, `${user.role} cannot create ${targetRole} accounts`));
 }

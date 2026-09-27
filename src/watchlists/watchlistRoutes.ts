@@ -39,7 +39,8 @@ const uploadPhotos = (req, res, next) =>
 const watchlistService = () => container.resolve(WatchlistService);
 
 function readPhotos(req: TypedRequest): UploadedPhoto[] {
-  return ((req as any).files ?? []).map((file: Express.Multer.File) => ({
+  const files = Array.isArray(req.files) ? req.files : [];
+  return files.map((file) => ({
     fileName: file.originalname,
     contentType: file.mimetype,
     content: file.buffer,
@@ -110,7 +111,7 @@ router.get("/:watchlist_id/targets/:target_id/images/:image_id", v(ip), catchAsy
   res.setHeader("Content-Type", image.contentType);
   // Photos of real people: never kept by shared caches.
   res.setHeader("Cache-Control", "private, max-age=3600");
-  Readable.fromWeb(image.body as any).pipe(res);
+  Readable.fromWeb(image.body as import("node:stream/web").ReadableStream).pipe(res);
 }));
 
 router.delete("/:watchlist_id/targets/:target_id/images/:image_id", v(ip), catchAsync(async (req: TypedRequest, res: Response) => {

@@ -1,7 +1,7 @@
 import { ZodError, ZodTypeAny } from "zod";
 import { ApiError } from "./middlewares/errorHandler.js";
 
-function validate<T extends ZodTypeAny>(data: any, schema: T): T["_output"] {
+function validate<T extends ZodTypeAny>(data: unknown, schema: T): T["_output"] {
   try {
     return schema.parse(data);
   } catch (error) {

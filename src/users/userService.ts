@@ -10,23 +10,18 @@ import { supabase } from "@core/db/supabase.js";
 import { validate } from "@core/validationService.js";
 import { createUserSchema, emailSchema, usernameSchema, userIdSchema } from "./userSchemas.js";
 import { hashPassword } from "@core/utils/crypto.js";
+import type { IUser } from "~types/interfaces.js";
 
 @injectable()
 export class UserService {
 // user BLL and database operations
-
-
-
-
-
-
 
 /**
  * Create a new user with password hashing
  * @param {Object} userData - User data
  * @returns {Object} - Created user
  */
-async createUser(userData) {
+async createUser(userData: unknown): Promise<User> {
   const validatedData = validate(userData, createUserSchema);
   const hashedPassword = await hashPassword(validatedData.password);
 
@@ -72,7 +67,7 @@ async createGoogleUser(userData: { username: string; name: string; email: string
   return new User(data);
 }
 
-async getUserByEmail(email) {
+async getUserByEmail(email: unknown): Promise<User | null> {
   const validatedEmail = validate(email, emailSchema);
 
   const { data, error } = await supabase.from("users").select("*").eq("email", validatedEmail).single();
@@ -85,7 +80,7 @@ async getUserByEmail(email) {
   return new User(data);
 }
 
-async getUserByUsername(username) {
+async getUserByUsername(username: unknown): Promise<User | null> {
   const validatedUsername = validate(username, usernameSchema);
 
   const { data, error } = await supabase.from("users").select("*").eq("username", validatedUsername).single();
@@ -98,7 +93,7 @@ async getUserByUsername(username) {
   return new User(data);
 }
 
-async getUserById(id) {
+async getUserById(id: unknown): Promise<User | null> {
   const validatedId = validate(id, userIdSchema);
 
   const { data, error } = await supabase.from("users").select("*").eq("id", validatedId).single();
@@ -116,7 +111,7 @@ async getUserById(id) {
  * @param {string} role - Optional role filter
  * @returns {Array} - Array of users
  */
-async getAllUsers(role = null) {
+async getAllUsers(role: string | null = null): Promise<User[]> {
   let query = supabase.from("users").select("*");
   
   if (role) {
@@ -138,7 +133,7 @@ async getAllUsers(role = null) {
  * @param {Object} updateData - Data to update
  * @returns {Object} - Updated user
  */
-async updateUser(id, updateData) {
+async updateUser(id: unknown, updateData: Partial<IUser>): Promise<User | null> {
   const validatedId = validate(id, userIdSchema);
 
   const { data, error } = await supabase
@@ -161,7 +156,7 @@ async updateUser(id, updateData) {
  * @param {string} id - User ID
  * @returns {boolean} - Success status
  */
-async deleteUser(id) {
+async deleteUser(id: unknown): Promise<boolean> {
   const validatedId = validate(id, userIdSchema);
 
   const { error } = await supabase

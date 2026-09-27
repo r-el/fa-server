@@ -16,7 +16,7 @@ if (!supabaseConfig.url || !supabaseConfig.key) {
   }
 } else {
   // Create Supabase client
-  supabase = createClient(supabaseConfig.url, supabaseConfig.key, (supabaseConfig as any).options);
+  supabase = createClient(supabaseConfig.url, supabaseConfig.key);
 }
 
 async function testSupabaseConnection() {
@@ -32,8 +32,9 @@ async function testSupabaseConnection() {
 
     logger.info("✔ Supabase connection successful");
     return true;
-  } catch (error: any) {
-    logger.error("✘ Supabase connection error:", error.message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error("✘ Supabase connection error:", message);
     return false;
   }
 }
