@@ -2,10 +2,7 @@ import { Response } from "express";
 import { TypedRequest } from "~types/request.js";
 import { container } from "@core/di.js";
 import { catchAsync } from "@core/middlewares/errorHandler.js";
-import { validate } from "@core/validationService.js";
-import { createUserSchema, loginUserSchema } from "@users/userSchemas.js";
 import { AuthService } from "./authService.js";
-import { verifyCodeSchema, resendCodeSchema } from "./authSchemas.js";
 
 const authService = () => container.resolve(AuthService);
 
@@ -24,10 +21,8 @@ function formatAuthUser(user: any) {
  * @route POST /auth/register
  */
 export const register = catchAsync(async (req: TypedRequest, res: Response) => {
-  const { username, password, name, email } = validate(req.body, createUserSchema);
-
+  const { username, password, name, email } = req.body;
   const result = await authService().registerUser(username, password, name, email, "viewer");
-
   res.status(201).json({
     success: true,
     message: "User registered successfully",
@@ -40,10 +35,8 @@ export const register = catchAsync(async (req: TypedRequest, res: Response) => {
  * @route POST /auth/login
  */
 export const login = catchAsync(async (req: TypedRequest, res: Response) => {
-  const { username, password } = validate(req.body, loginUserSchema);
-
+  const { username, password } = req.body;
   const result = await authService().loginUser(username, password);
-
   res.json({
     success: true,
     message: "Login successful",
@@ -56,10 +49,7 @@ export const login = catchAsync(async (req: TypedRequest, res: Response) => {
  * @route POST /auth/google
  */
 export const googleLogin = catchAsync(async (req: TypedRequest, res: Response) => {
-  const { idToken } = req.body;
-
-  const result = await authService().authenticateViaStrategy("google", { idToken });
-
+  const result = await authService().authenticateViaStrategy("google", { idToken: req.body.idToken });
   res.json({
     success: true,
     message: "Google login successful",
@@ -72,10 +62,7 @@ export const googleLogin = catchAsync(async (req: TypedRequest, res: Response) =
  * @route POST /auth/verify-code
  */
 export const verifyEmailCode = catchAsync(async (req: TypedRequest, res: Response) => {
-  const { email, code } = validate(req.body, verifyCodeSchema);
-
-  const result = authService().verifyCode(email, code);
-
+  const result = authService().verifyCode(req.body.email, req.body.code);
   res.json({
     success: true,
     message: "Email verified successfully",
@@ -88,9 +75,6 @@ export const verifyEmailCode = catchAsync(async (req: TypedRequest, res: Respons
  * @route POST /auth/resend-code
  */
 export const resendEmailCode = catchAsync(async (req: TypedRequest, res: Response) => {
-  const { email } = validate(req.body, resendCodeSchema);
-
-  const result = await authService().resendVerificationCode(email);
-
+  const result = await authService().resendVerificationCode(req.body.email);
   res.json(result);
 });
