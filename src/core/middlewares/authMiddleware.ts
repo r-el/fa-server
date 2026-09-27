@@ -78,3 +78,19 @@ export function canAccessUser(req: any, res: any, next: any) {
     next(error);
   }
 }
+
+/**
+ * Enforce role-hierarchy rules for creating/promoting users.
+ * admin → can create any role; operator → viewer only.
+ * Use after authenticateToken and requireRole middlewares.
+ */
+export function requireCreationRole(req: any, res: any, next: any) {
+  const actor = req.user;
+  const targetRole = req.body?.role ?? "viewer";
+
+  if (actor.role === "admin") return next();
+
+  if (actor.role === "operator" && targetRole === "viewer") return next();
+
+  next(new ApiError(403, `${actor.role} cannot create ${targetRole} accounts`));
+}

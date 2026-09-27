@@ -7,7 +7,7 @@ import {
   updateUserController, 
   deleteUserController 
 } from "./userController.js";
-import { authenticateToken, canAccessUser, requireRole } from "@core/middlewares/authMiddleware.js";
+import { authenticateToken, canAccessUser, requireRole, requireCreationRole } from "@core/middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.get("/", authenticateToken, requireRole(["admin", "operator"]), getAllUse
 router.get("/profile", authenticateToken, getProfile);
 
 // POST /users - Create new user (admin can create anyone, operator can create viewers only)
-router.post("/", authenticateToken, requireRole(["admin", "operator"]), createUserController);
+router.post("/", authenticateToken, requireRole(["admin", "operator"]), requireCreationRole, createUserController);
 
 // GET /users/:id - Get user by ID (with access control)
 router.get("/:id", authenticateToken, canAccessUser, getUserByIdController);
