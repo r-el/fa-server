@@ -1,5 +1,3 @@
-import { ObjectId } from "mongodb";
-
 export interface IUser {
     id?: string;
     username?: string;
@@ -56,7 +54,7 @@ export interface ICameraChanges {
 }
 
 export interface IEvent {
-    _id?: ObjectId | string;
+    _id?: string;
     person_id: string;
     camera_id: string;
     level: "low" | "medium" | "high";

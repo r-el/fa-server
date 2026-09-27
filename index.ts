@@ -3,7 +3,6 @@
  * 2. Starts the server, Socket.IO and the Specter event stream
  */
 import "reflect-metadata";
-import { closeMongoDB, connectMongoDB } from "@core/db/mongodb.js";
 import { testSupabaseConnection } from "@core/db/supabase.js";
 import { serverConfig } from "@core/config/server.js";
 import { container } from "@core/di.js";
@@ -33,7 +32,6 @@ async function gracefulShutdown(signal: string): Promise<void> {
   await eventStream.stop().catch((error) => logger.error("Cannot close NATS", { error: errorMessage(error) }));
   await closeSocketServer();
   await new Promise((resolve) => (httpServer ? httpServer.close(resolve) : resolve(undefined)));
-  await closeMongoDB();
   process.exit(0);
 }
 
@@ -45,16 +43,6 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 async function startServer(): Promise<void> {
   try {
     logger.info("Starting Face Alert Server");
-
-    // Try to connect to MongoDB, but don't fail if it's not available
-    console.log("Attempting to connect to MongoDB...");
-    try {
-      await connectMongoDB();
-      console.log("✔ MongoDB connected successfully");
-    } catch (error) {
-      console.log("⚠ MongoDB connection failed, continuing with mock data fallback");
-      logger.error("MongoDB connection failed", { error: errorMessage(error) });
-    }
 
     // Test Supabase connection
     console.log("Testing Supabase connection...");

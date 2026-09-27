@@ -18,7 +18,6 @@ import userRoutes from "./users/userRoutes.js";
 import cameraRoutes from "./cameras/cameraRoutes.js";
 import alertRoutes from "./alerts/alertRoutes.js";
 import watchlistRoutes, { enrollmentBatchRoutes } from "./watchlists/watchlistRoutes.js";
-import mongoRoutes from "./dashboard/mongoRoutes.js";
 import dashboardRoutes from "./dashboard/dashboardRoutes.js";
 import { setupSwagger } from "./core/swagger.js";
 
@@ -55,7 +54,6 @@ api.use("/cameras", cameraRoutes);
 api.use("/alerts", alertRoutes);
 api.use("/watchlists", watchlistRoutes);
 api.use("/enrollment-batches", enrollmentBatchRoutes);
-api.use("/mongo", mongoRoutes);
 api.use("/dashboard", dashboardRoutes);
 api.use((req, res, next) => next(new ApiError(404, "Not found")));
 app.use("/api", api);
