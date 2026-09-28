@@ -14,7 +14,6 @@
     "test:coverage": "vitest run --coverage",
     "build": "tsc && tsc-alias",
     "build:client": "cd ../client && npm install && npm run build && cp -r dist/* ../server/public/",
-    "heroku-postbuild": "echo 'Server static files ready'",
     "prepare": "husky"
   },
   "engines": {
