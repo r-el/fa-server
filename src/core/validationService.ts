@@ -15,4 +15,18 @@ function validate<T extends ZodTypeAny>(data: unknown, schema: T): T["_output"] 
   }
 }
 
-export { validate };
+async function validateAsync<T extends ZodTypeAny>(data: unknown, schema: T): Promise<T["_output"]> {
+  try {
+    return await schema.parseAsync(data);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const messages = error.issues.map((issue) => issue.message);
+      const apiError = new ApiError(400, "Validation error");
+      apiError.errors = messages;
+      throw apiError;
+    }
+    throw error;
+  }
+}
+
+export { validate, validateAsync };

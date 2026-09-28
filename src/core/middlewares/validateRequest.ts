@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodTypeAny } from "zod";
 import { AnyZodObject } from "~types/request.js";
-import { validate } from "@core/validationService.js";
+import { validateAsync } from "@core/validationService.js";
 
 /**
  * Express middleware that validates req.params, req.query and/or req.body
- * against the supplied Zod schemas.  Validated (and coerced) values are
+ * against the supplied Zod schemas. Validated (and coerced) values are
  * written back onto `req` so the downstream handler receives clean data.
  *
  * Usage in routes:
@@ -19,14 +19,19 @@ export function v(
         params?: ZodTypeAny;
         query?: ZodTypeAny;
       }
-    | AnyZodObject
+    | AnyZodObject,
 ) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shape = "shape" in schemas && typeof (schemas as any).shape === "object" ? (schemas as any).shape : schemas;
-    if (shape.params) req.params = validate(req.params, shape.params) as typeof req.params;
-    if (shape.query) req.query = validate(req.query, shape.query) as typeof req.query;
-    if (shape.body) req.body = validate(req.body, shape.body);
-    next();
+
+    Promise.resolve()
+      .then(async () => {
+        if (shape.params) req.params = (await validateAsync(req.params, shape.params)) as typeof req.params;
+        if (shape.query) req.query = (await validateAsync(req.query, shape.query)) as typeof req.query;
+        if (shape.body) req.body = await validateAsync(req.body, shape.body);
+        next();
+      })
+      .catch(next);
   };
 }
