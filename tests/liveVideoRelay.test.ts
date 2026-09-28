@@ -43,7 +43,7 @@ async function startRelayWithFakeSpecter() {
     apiUrl: `http://127.0.0.1:${specterPort}`,
     apiTokenFile,
     natsUrl: "nats://unused",
-    ownerId: "facealert",
+    ownerId: "specter",
     requestTimeoutMs: 1_000,
   };
   const faServer = http.createServer();

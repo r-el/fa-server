@@ -31,7 +31,7 @@ describe("SpecterEventStream connection lifecycle", () => {
       apiUrl: "http://specter.test",
       apiTokenFile: "unused",
       natsUrl: "nats://nats.test:4222",
-      ownerId: "facealert",
+      ownerId: "specter",
       requestTimeoutMs: 1_000,
     });
 

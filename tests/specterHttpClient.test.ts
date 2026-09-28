@@ -15,7 +15,7 @@ async function buildConfig(token: string): Promise<SpecterConfig> {
     apiUrl: "http://specter.test",
     apiTokenFile,
     natsUrl: "nats://unused",
-    ownerId: "facealert",
+    ownerId: "specter",
     requestTimeoutMs: 1_000,
   };
 }
@@ -43,7 +43,7 @@ describe("SpecterHttpClient", () => {
     });
 
     const cameras = await client.unwrap(
-      client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "facealert" } } }),
+      client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "specter" } } }),
     );
 
     expect(cameras.map((camera) => camera.name)).toEqual(["Gate"]);
@@ -61,7 +61,7 @@ describe("SpecterHttpClient", () => {
         : jsonResponse(401, { detail: "invalid token" });
     });
 
-    await client.unwrap(client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "facealert" } } }));
+    await client.unwrap(client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "specter" } } }));
 
     expect(seenAuthorizations).toEqual(["Bearer old-token", "Bearer new-token"]);
   });
@@ -78,7 +78,7 @@ describe("SpecterHttpClient", () => {
 
     const call = client.unwrap(
       client.api.GET("/owners/{owner_id}/cameras/{camera_id}", {
-        params: { path: { owner_id: "facealert", camera_id: CAMERA_ID } },
+        params: { path: { owner_id: "specter", camera_id: CAMERA_ID } },
       }),
     );
 
@@ -101,7 +101,7 @@ describe("SpecterHttpClient", () => {
       apiUrl: "http://specter.test",
       apiTokenFile: "/non/existent/path/api.token",
       natsUrl: "nats://unused",
-      ownerId: "facealert",
+      ownerId: "specter",
       requestTimeoutMs: 1_000,
     });
 
@@ -134,7 +134,7 @@ describe("loadSpecterConfig", () => {
   it("loads defaults when environment is empty", () => {
     const config = loadSpecterConfig({});
     expect(config.apiUrl).toBe("http://127.0.0.1:8000");
-    expect(config.ownerId).toBe("facealert");
+    expect(config.ownerId).toBe("specter");
     expect(config.requestTimeoutMs).toBe(10000);
     expect(config.apiTokenFile).toBeTruthy();
   });

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { InvalidSpecterEventError, parseSpecterEvent } from "@specter/specterEventParser.js";
 
-const OWNER_SUBJECT = "specter.owners.facealert";
+const OWNER_SUBJECT = "specter.owners.specter";
 const CAMERA_ID = `camera_${"b".repeat(32)}`;
 
 const statusMessage = {
   schema_version: "1.0",
   message_id: "message_1",
   occurred_at: "2026-09-24T10:00:00Z",
-  owner_id: "facealert",
+  owner_id: "specter",
   camera_id: CAMERA_ID,
   status: "running",
 };
@@ -26,7 +26,7 @@ describe("parseSpecterEvent", () => {
   it("tells an enrollment status from a camera status", () => {
     const event = parseSpecterEvent(`${OWNER_SUBJECT}.enrollment.status_changed`, {
       occurred_at: "2026-09-24T10:00:00Z",
-      owner_id: "facealert",
+      owner_id: "specter",
       target_id: "target_1",
       reference_image_id: "image_1",
       modality: "face",

@@ -37,7 +37,7 @@ describe("SpecterEventRelay", () => {
       message: {
         message_id: "message_1",
         occurred_at: "2026-09-24T10:00:00Z",
-        owner_id: "facealert",
+        owner_id: "specter",
         camera_id: CAMERA_ID,
         track_id: 3,
         watchlist_id: WATCHLIST_ID,
@@ -50,7 +50,7 @@ describe("SpecterEventRelay", () => {
         bounding_box: { x: 0.1, y: 0.1, width: 0.2, height: 0.4 },
         first_seen_at: "2026-09-24T09:59:58Z",
         frame_captured_at: "2026-09-24T10:00:00Z",
-        snapshot_path: "evidence/facealert/2026/09/24/message_1.jpg",
+        snapshot_path: "evidence/specter/2026/09/24/message_1.jpg",
       },
     });
 
@@ -77,7 +77,7 @@ describe("SpecterEventRelay", () => {
       kind: "configuration_changed",
       message: {
         occurred_at: "2026-09-24T10:00:00Z",
-        owner_id: "facealert",
+        owner_id: "specter",
         entity_kind: "camera",
         entity_id: CAMERA_ID,
         change_kind: "created",

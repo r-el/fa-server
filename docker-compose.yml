@@ -14,7 +14,7 @@ services:
       SPECTER_API_URL: http://api:8000
       SPECTER_NATS_URL: nats://nats:4222
       QDRANT_URL: http://qdrant:6333
-      SPECTER_OWNER_ID: ${SPECTER_OWNER_ID:-facealert}
+      SPECTER_OWNER_ID: ${SPECTER_OWNER_ID:-specter}
       SPECTER_API_TOKEN_FILE: /run/secrets/specter_api_token
     networks:
       - default
