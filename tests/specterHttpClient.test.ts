@@ -134,7 +134,7 @@ describe("loadSpecterConfig", () => {
   it("loads defaults when environment is empty", () => {
     const config = loadSpecterConfig({});
     expect(config.apiUrl).toBe("http://127.0.0.1:8000");
-    expect(config.ownerId).toBe("specter");
+    expect(config.ownerId).toBe("facealert");
     expect(config.requestTimeoutMs).toBe(10000);
     expect(config.apiTokenFile).toBeTruthy();
   });
