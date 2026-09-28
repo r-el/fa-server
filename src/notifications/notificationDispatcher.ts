@@ -10,7 +10,7 @@
  */
 
 import logger from "@core/utils/logger.js";
-import { cameraRoom } from "./cameraRoomManager.js";
+import { cameraRoom, roleRoom } from "./cameraRoomManager.js";
 import type { Server } from "socket.io";
 import type {
   Notification,
@@ -50,6 +50,26 @@ export class NotificationDispatcher {
     this.io.emit("notification", notification);
 
     logger.debug("Notification broadcast", { kind: notification.kind });
+  }
+
+  /** Sends a notification to every connected user with one of the roles. */
+  toRoles(roles: string[], notification: Notification): void {
+    this.io.to(roles.map(roleRoom)).emit("notification", notification);
+  }
+
+  /** Sends one notification to a camera's room and to roles, once per user in both. */
+  toCameraAndRoles(cameraId: string, roles: string[], notification: Notification): void {
+    this.io.to([cameraRoom(cameraId), ...roles.map(roleRoom)]).emit("notification", notification);
+  }
+
+  /** Adds every connected user with the role to a camera's room, such as admins to a new camera. */
+  joinCameraByRole(role: string, cameraId: string): void {
+    this.io.in(roleRoom(role)).socketsJoin(cameraRoom(cameraId));
+  }
+
+  /** Empties a camera's room, after the camera was deleted. */
+  closeCamera(cameraId: string): void {
+    this.io.socketsLeave(cameraRoom(cameraId));
   }
 
   /**

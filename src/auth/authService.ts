@@ -6,6 +6,7 @@ import { ApiError } from "@core/middlewares/errorHandler.js";
 import { validate } from "@core/validationService.js";
 import { createUserSchema, loginUserSchema } from "@users/userSchemas.js";
 import { UserService } from "@users/userService.js";
+import User from "@users/userModel.js";
 import logger from "@core/utils/logger.js";
 import { EmailService } from "../services/email/emailService.js";
 
@@ -21,7 +22,7 @@ const JWT_SECRET = authConfig.jwtSecret;
 interface PendingVerification {
   code: string;
   expiresAt: number;
-  user: any;
+  user: User;
   token: string;
 }
 
@@ -102,8 +103,8 @@ export class AuthService {
       role: user.role,
     };
 
-    const expiresIn = DEFAULT_TOKEN_EXPIRATION;
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as any });
+    const expiresIn = DEFAULT_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"];
+    return jwt.sign(payload, JWT_SECRET, { expiresIn });
   }
 
   /**
@@ -122,7 +123,13 @@ export class AuthService {
     const user = await this.userService.createUser(validatedData);
 
     // Generate token
-    const token = this.generateToken(user as any);
+    const token = this.generateToken({
+      id: user.id || "",
+      username: user.username || "",
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "viewer",
+    });
 
     // Generate real 6-digit verification code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -212,8 +219,9 @@ export class AuthService {
 
     try {
       return await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-    } catch (error: any) {
-      throw new Error("Failed to hash password: " + error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error("Failed to hash password: " + message);
     }
   }
 
@@ -224,8 +232,9 @@ export class AuthService {
     if (!password || !hash) return false;
     try {
       return await bcrypt.compare(password, hash);
-    } catch (error: any) {
-      logger.error("Password verification error: " + error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error("Password verification error: " + message);
       return false;
     }
   }

@@ -1,0 +1,1 @@
+export const VECTOR_REPOSITORY = Symbol.for("fa.vector.VectorRepository");

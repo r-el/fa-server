@@ -23,9 +23,14 @@
       "@auth/*": ["./src/auth/*"],
       "@users/*": ["./src/users/*"],
       "@cameras/*": ["./src/cameras/*"],
+      "@vector/*": ["./src/vector/*"],
       "@events/*": ["./src/events/*"],
       "@dashboard/*": ["./src/dashboard/*"],
       "@notifications/*": ["./src/notifications/*"],
+      "@specter/*": ["./src/specter/*"],
+      "@alerts/*": ["./src/alerts/*"],
+      "@watchlists/*": ["./src/watchlists/*"],
+      "@live/*": ["./src/live/*"],
       "~types/*": ["./src/@types/*"]
     }
   },

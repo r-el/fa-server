@@ -9,7 +9,8 @@ export async function hashPassword(password: string): Promise<string> {
 
   try {
     return await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
-  } catch (error: any) {
-    throw new Error("Failed to hash password: " + error.message);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error("Failed to hash password: " + message);
   }
 }

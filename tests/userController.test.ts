@@ -2,7 +2,7 @@ import { container } from 'tsyringe';
 import { UserService } from '@users/userService.js';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProfile, getUserByIdController, getAllUsersController, createUserController } from '@users/userController.js';
-import * as userService from '@users/userService.js';
+import { requireCreationRole } from '@core/middlewares/authMiddleware.js';
 import { ApiError } from '@core/middlewares/errorHandler.js';
 
 vi.mock("@users/userService.js", () => ({ UserService: class { getUserById: any = vi.fn(); getAllUsers: any = vi.fn(); createUser: any = vi.fn(); deleteUser: any = vi.fn(); updateUser: any = vi.fn(); getUserByUsername: any = vi.fn(); getUserByEmail: any = vi.fn(); } }));
@@ -19,14 +19,13 @@ describe('User Controller', () => {
       };
 
       const req = { user: { id: '123' } } as any;
-      const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+      const res = { json: vi.fn() } as any;
       const next = vi.fn();
 
       vi.mocked(container.resolve(UserService).getUserById as any).mockResolvedValue(mockUser as any);
 
       await getProfile(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
         data: { user: expect.objectContaining({ username: 'testuser' }) }
@@ -64,21 +63,47 @@ describe('User Controller', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(container.resolve(UserService).createUser as any).toHaveBeenCalled();
     });
+  });
 
-    it('should block operator from creating an admin', async () => {
+  describe('requireCreationRole middleware', () => {
+    it('should block operator from creating an admin', () => {
       const req = {
         user: { role: 'operator' },
-        body: { username: 'newadmin', password: 'password', name: 'New Admin', email: 'admin@example.com', role: 'admin' }
+        body: { role: 'admin' },
       } as any;
-
       const res = {} as any;
       const next = vi.fn();
 
-      await createUserController(req, res, next);
+      requireCreationRole(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ApiError));
       expect(next.mock.calls[0][0].statusCode).toBe(403);
-      expect(container.resolve(UserService).createUser as any).not.toHaveBeenCalled();
+    });
+
+    it('should allow operator to create a viewer', () => {
+      const req = {
+        user: { role: 'operator' },
+        body: { role: 'viewer' },
+      } as any;
+      const res = {} as any;
+      const next = vi.fn();
+
+      requireCreationRole(req, res, next);
+
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('should allow admin to create any role', () => {
+      const req = {
+        user: { role: 'admin' },
+        body: { role: 'admin' },
+      } as any;
+      const res = {} as any;
+      const next = vi.fn();
+
+      requireCreationRole(req, res, next);
+
+      expect(next).toHaveBeenCalledWith();
     });
   });
 });

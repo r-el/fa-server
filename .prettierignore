@@ -1,0 +1,6 @@
+dist
+node_modules
+coverage
+contracts/specter
+src/specter/generated
+package-lock.json

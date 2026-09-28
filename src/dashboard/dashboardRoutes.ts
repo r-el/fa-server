@@ -1,101 +1,45 @@
-import logger from "@core/utils/logger.js";
-// Dashboard routes for real-time statistics
+// Dashboard statistics, computed from the user's cameras and Specter's alert summary.
 
 import express from "express";
-import { minioStorageService } from "./minioStorageService.js";
-import { isMongoDBAvailable } from "@core/db/mongodb.js";
 import { authenticateToken } from "@core/middlewares/authMiddleware.js";
+import { catchAsync } from "@core/middlewares/errorHandler.js";
 import { container } from "@core/di.js";
-import { UserService } from "@users/userService.js";
-import { Camera } from "@cameras/cameraModel.js";
+import { CameraService } from "@cameras/cameraService.js";
+import { AlertService } from "@alerts/alertService.js";
+import { SPECTER_EVENT_STREAM, SPECTER_HTTP_CLIENT } from "@specter/tokens.js";
+import type { SpecterEventStream } from "@specter/specterEventStream.js";
+import type { SpecterHttpClient } from "@specter/specterHttpClient.js";
+
+import { Response } from "express";
+import { TypedRequest } from "~types/request.js";
 
 const router = express.Router();
 
-// Get dashboard statistics based on user role and assigned cameras
-router.get('/stats', authenticateToken, async (req: any, res: any) => {
-  try {
-    const userId = req.user.id;
-    const userRole = req.user.role;
-    
-    // Get user details
-    const user = await container.resolve(UserService).getUserById(userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+router.get("/stats", authenticateToken, catchAsync(async (req: TypedRequest, res: Response) => {
+  const startOfTodayUtc = new Date();
+  startOfTodayUtc.setUTCHours(0, 0, 0, 0);
 
-    let stats = {
-      activeCameras: 0,
-      todaysEvents: 0,
-      highRiskAlerts: 0,
-      systemStatus: 'offline',
-      userCameras: [] as any[]
-    };
+  const [cameras, todaysSummary, isSpecterHealthy] = await Promise.all([
+    container.resolve(CameraService).listAccessibleCameras(req.user),
+    container
+      .resolve(AlertService)
+      .summarizeAlerts({ created_since: startOfTodayUtc.toISOString() }, req.user),
+    container.resolve<SpecterHttpClient>(SPECTER_HTTP_CLIENT).isHealthy(),
+  ]);
+  const isNatsConnected = container.resolve<SpecterEventStream>(SPECTER_EVENT_STREAM).isConnected;
 
-    // Get user's assigned cameras
-    if (userRole === 'admin') {
-      // Admin sees all cameras
-      const allCameras = await Camera.getAllCameras();
-      stats.activeCameras = allCameras.length;
-      stats.userCameras = allCameras;
-    } else {
-      // Regular users see only their assigned cameras
-      const userCameras = await Camera.getCamerasByUserId(userId);
-      stats.userCameras = userCameras;
-      stats.activeCameras = userCameras.length;
-    }
-
-    // Check MongoDB system status
-    if (isMongoDBAvailable()) {
-      stats.systemStatus = 'online';
-      
-      try {
-        const dbModule = await import("@core/db/mongodb.js");
-        const collection = dbModule.getEventsCollection();
-        
-        // Get today's events
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const todaysEvents = await collection.countDocuments({
-            timestamp: {
-              $gte: today,
-              $lt: tomorrow
-            }
-          });
-
-        stats.todaysEvents = todaysEvents;
-
-        // Get high risk alerts (events with confidence > 0.8)
-        const highRiskAlerts = await collection.countDocuments({
-            timestamp: {
-              $gte: today,
-              $lt: tomorrow
-            },
-            'detection_metadata.confidence': { $gt: 0.8 }
-          });
-
-        stats.highRiskAlerts = highRiskAlerts;
-
-      } catch (mongoError: any) {
-        logger.warn('MongoDB query failed:', mongoError.message);
-        // Keep system status as online but use fallback values
-      }
-    }
-
-    res.json({
-      success: true,
-      stats
-    });
-
-  } catch (error: any) {
-    logger.error('Dashboard stats error:', error);
-    res.status(500).json({ 
-      error: 'Failed to get dashboard stats',
-      details: error.message 
-    });
-  }
-});
+  res.json({
+    success: true,
+    stats: {
+      activeCameras: cameras.filter((camera) => camera.live_status === "running").length,
+      totalCameras: cameras.length,
+      todaysEvents: todaysSummary.total_count,
+      // Alerts nobody has looked at yet are the ones that need attention.
+      highRiskAlerts: todaysSummary.unacknowledged_count,
+      systemStatus: isSpecterHealthy && isNatsConnected ? "online" : "offline",
+      todaysSummary,
+    },
+  });
+}));
 
 export default router;

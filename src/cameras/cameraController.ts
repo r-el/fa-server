@@ -1,271 +1,110 @@
-import logger from "@core/utils/logger.js";
 import { Response } from "express";
 import { TypedRequest } from "~types/request.js";
 import { container } from "@core/di.js";
+import { catchAsync } from "@core/middlewares/errorHandler.js";
 import { CameraService } from "./cameraService.js";
-import { validate } from "@core/validationService.js";
-
+import { CameraSettingsService } from "./cameraSettingsService.js";
 import {
-  createCameraSchema,
-  updateCameraSchema,
   assignCameraSchema,
-  cameraIdSchema,
-  getCamerasQuerySchema,
+  createCameraSchema,
+  getCameraSchema,
+  removeCameraAssignmentSchema,
+  ruleParamsSchema,
+  updateCameraSchema,
+  zoneParamsSchema,
 } from "./cameraSchemas.js";
 
+const cameraService = () => container.resolve(CameraService);
+const settingsService = () => container.resolve(CameraSettingsService);
+
 export class CameraController {
-  /**
-   * Create a new camera
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async createCamera(req: TypedRequest<typeof createCameraSchema>, res: Response) {
-    try {
-      // Validate request body
-      const value = validate(req.body, createCameraSchema);
+  static createCamera = catchAsync(async (req: TypedRequest<typeof createCameraSchema>, res: Response) => {
+    const camera = await cameraService().createCamera(req.body, req.user);
+    res.status(201).json({ success: true, message: "Camera created successfully", data: camera });
+  });
 
-      // Get user info from token
-      const { id: userId, role } = req.user;
+  static getCameras = catchAsync(async (req: TypedRequest, res: Response) => {
+    const cameras = await cameraService().listAccessibleCameras(req.user);
+    res.json({
+      success: true,
+      message: "Cameras retrieved successfully",
+      data: cameras,
+      total: cameras.length,
+    });
+  });
 
-      // Create camera
-      const camera = await container.resolve(CameraService).createCamera(value, userId, role);
+  static getCameraById = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    const camera = await cameraService().getAccessibleCamera(req.params.camera_id, req.user);
+    res.json({ success: true, message: "Camera retrieved successfully", data: camera });
+  });
 
-      res.status(201).json({
-        success: true,
-        message: "Camera created successfully",
-        data: camera,
-      });
-    } catch (error) {
-      logger.error("Create camera error:", error);
-      res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  static updateCamera = catchAsync(async (req: TypedRequest<typeof updateCameraSchema>, res: Response) => {
+    const camera = await cameraService().updateCamera(req.params.camera_id, req.body, req.user);
+    res.json({ success: true, message: "Camera updated successfully", data: camera });
+  });
 
-  /**
-   * Get cameras for the authenticated user
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async getCameras(req: TypedRequest<typeof getCamerasQuerySchema>, res: Response) {
-    try {
-      // Validate query parameters
-      const value = validate(req.query, getCamerasQuerySchema);
+  static deleteCamera = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    await cameraService().deleteCamera(req.params.camera_id, req.user);
+    res.json({ success: true, message: "Camera deleted successfully" });
+  });
 
-      const { id: userId, role } = req.user;
+  // Specter only records the request; the camera's live_status follows over Socket.IO.
+  static startCamera = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    const camera = await cameraService().startCamera(req.params.camera_id, req.user);
+    res.status(202).json({ success: true, message: "Camera start requested", data: camera });
+  });
 
-      // Get cameras for user
-      // Note: we might need to pass value to service if it supports pagination/search
-      const cameras = await container.resolve(CameraService).getCamerasForUser(userId, role);
+  static stopCamera = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    const camera = await cameraService().stopCamera(req.params.camera_id, req.user);
+    res.status(202).json({ success: true, message: "Camera stop requested", data: camera });
+  });
 
-      res.json({
-        success: true,
-        message: "Cameras retrieved successfully",
-        data: cameras,
-        total: cameras.length,
-      });
-    } catch (error) {
-      logger.error("Get cameras error:", error);
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  static assignCamera = catchAsync(async (req: TypedRequest<typeof assignCameraSchema>, res: Response) => {
+    const assignment = await cameraService().assignCameraToUser(req.params.camera_id, req.body.user_id, req.user);
+    res.status(201).json({ success: true, message: "Camera assigned successfully", data: assignment });
+  });
 
-  /**
-   * Get camera by ID
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async getCameraById(req: TypedRequest<typeof cameraIdSchema>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const value = validate(req.params, cameraIdSchema);
+  static removeAssignment = catchAsync(async (req: TypedRequest<typeof removeCameraAssignmentSchema>, res: Response) => {
+    await cameraService().removeCameraAssignment(req.params.camera_id, req.params.user_id, req.user);
+    res.json({ success: true, message: "Camera assignment removed successfully" });
+  });
 
-      const { id: userId, role } = req.user;
-      const { camera_id } = value;
+  static getCameraAssignments = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    const assignments = await cameraService().getCameraAssignments(req.params.camera_id, req.user);
+    res.json({ success: true, message: "Camera assignments retrieved successfully", data: assignments });
+  });
 
-      // Get camera
-      const camera = await container.resolve(CameraService).getCameraById(camera_id, userId, role);
+  static listZones = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    res.json({ success: true, data: await settingsService().listZones(req.params.camera_id, req.user) });
+  });
 
-      res.json({
-        success: true,
-        message: "Camera retrieved successfully",
-        data: camera,
-      });
-    } catch (error) {
-      logger.error("Get camera by ID error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 404;
-      res.status(statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  static createZone = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    res.status(201).json({ success: true, data: await settingsService().createZone(req.params.camera_id, req.body, req.user) });
+  });
 
-  /**
-   * Update camera
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async updateCamera(req: TypedRequest<typeof updateCameraSchema>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const idValue = validate(req.params, cameraIdSchema);
+  static updateZone = catchAsync(async (req: TypedRequest<typeof zoneParamsSchema>, res: Response) => {
+    res.json({ success: true, data: await settingsService().updateZone(req.params.camera_id, req.params.zone_id, req.body, req.user) });
+  });
 
-      // Validate request body
-      const bodyValue = validate(req.body, updateCameraSchema);
+  static deleteZone = catchAsync(async (req: TypedRequest<typeof zoneParamsSchema>, res: Response) => {
+    await settingsService().deleteZone(req.params.camera_id, req.params.zone_id, req.user);
+    res.json({ success: true, message: "Zone deleted successfully" });
+  });
 
-      const { id: userId, role } = req.user;
-      const { camera_id } = idValue;
+  static listRules = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    res.json({ success: true, data: await settingsService().listRules(req.params.camera_id, req.user) });
+  });
 
-      // Update camera
-      const updatedCamera = await container.resolve(CameraService).updateCamera(camera_id, bodyValue, userId, role);
+  static createRule = catchAsync(async (req: TypedRequest<typeof getCameraSchema>, res: Response) => {
+    res.status(201).json({ success: true, data: await settingsService().createRule(req.params.camera_id, req.body, req.user) });
+  });
 
-      res.json({
-        success: true,
-        message: "Camera updated successfully",
-        data: updatedCamera,
-      });
-    } catch (error) {
-      logger.error("Update camera error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 400;
-      res.status(statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  static updateRule = catchAsync(async (req: TypedRequest<typeof ruleParamsSchema>, res: Response) => {
+    res.json({ success: true, data: await settingsService().updateRule(req.params.camera_id, req.params.rule_id, req.body, req.user) });
+  });
 
-  /**
-   * Delete camera
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async deleteCamera(req: TypedRequest<typeof cameraIdSchema>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const value = validate(req.params, cameraIdSchema);
-
-      const { id: userId, role } = req.user;
-      const { camera_id } = value;
-
-      // Delete camera
-      await container.resolve(CameraService).deleteCamera(camera_id, userId, role);
-
-      res.json({
-        success: true,
-        message: "Camera deleted successfully",
-      });
-    } catch (error) {
-      logger.error("Delete camera error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 404;
-      res.status(statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  /**
-   * Assign camera to user
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async assignCamera(req: TypedRequest<typeof assignCameraSchema>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const { camera_id } = validate(req.params, cameraIdSchema);
-
-      // Validate request body
-      const validatedData = validate(req.body, assignCameraSchema);
-
-      const { id: userId, role } = req.user;
-      const { user_id } = validatedData;
-
-      // Assign camera
-      const assignment = await container.resolve(CameraService).assignCameraToUser(camera_id, user_id, userId, role);
-
-      res.status(201).json({
-        success: true,
-        message: "Camera assigned successfully",
-        data: assignment,
-      });
-    } catch (error) {
-      logger.error("Assign camera error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 400;
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  /**
-   * Remove camera assignment
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async removeAssignment(req: TypedRequest<any>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const idValue = validate(req.params, cameraIdSchema);
-
-      // Validate user ID parameter
-      const userValue = validate(req.params, assignCameraSchema);
-
-      const { id: userId, role } = req.user;
-      const { camera_id } = idValue;
-      const { user_id } = userValue;
-
-      // Remove assignment
-      await container.resolve(CameraService).removeCameraAssignment(camera_id, user_id, userId, role);
-
-      res.json({
-        success: true,
-        message: "Camera assignment removed successfully",
-      });
-    } catch (error) {
-      logger.error("Remove assignment error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 404;
-      res.status(statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  /**
-   * Get camera assignments
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  static async getCameraAssignments(req: TypedRequest<typeof cameraIdSchema>, res: Response) {
-    try {
-      // Validate camera ID parameter
-      const value = validate(req.params, cameraIdSchema);
-
-      const { id: userId, role } = req.user;
-      const { camera_id } = value;
-
-      // Get assignments
-      const assignments = await container.resolve(CameraService).getCameraAssignments(camera_id, userId, role);
-
-      res.json({
-        success: true,
-        message: "Camera assignments retrieved successfully",
-        data: assignments,
-      });
-    } catch (error) {
-      logger.error("Get camera assignments error:", error);
-      const statusCode = error.message.includes("permissions") ? 403 : 404;
-      res.status(statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  static deleteRule = catchAsync(async (req: TypedRequest<typeof ruleParamsSchema>, res: Response) => {
+    await settingsService().deleteRule(req.params.camera_id, req.params.rule_id, req.user);
+    res.json({ success: true, message: "Rule deleted successfully" });
+  });
 }
