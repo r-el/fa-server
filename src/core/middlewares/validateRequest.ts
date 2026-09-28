@@ -12,6 +12,23 @@ import { validateAsync } from "@core/validationService.js";
  *   import { v } from "@core/middlewares/validateRequest.js";
  *   router.put("/:id", v({ params: idSchema, body: updateSchema }), controller);
  */
+function safeAssign<K extends keyof Request>(req: Request, key: K, value: Request[K]): void {
+  try {
+    req[key] = value;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      Object.defineProperty(req, key, {
+        value,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      });
+      return;
+    }
+    throw error;
+  }
+}
+
 export function v(
   schemas:
     | {
@@ -27,9 +44,18 @@ export function v(
 
     Promise.resolve()
       .then(async () => {
-        if (shape.params) req.params = (await validateAsync(req.params, shape.params)) as typeof req.params;
-        if (shape.query) req.query = (await validateAsync(req.query, shape.query)) as typeof req.query;
-        if (shape.body) req.body = await validateAsync(req.body, shape.body);
+        if (shape.params) {
+          const validatedParams = (await validateAsync(req.params, shape.params)) as typeof req.params;
+          safeAssign(req, "params", validatedParams);
+        }
+        if (shape.query) {
+          const validatedQuery = (await validateAsync(req.query, shape.query)) as typeof req.query;
+          safeAssign(req, "query", validatedQuery);
+        }
+        if (shape.body) {
+          const validatedBody = await validateAsync(req.body, shape.body);
+          safeAssign(req, "body", validatedBody);
+        }
         next();
       })
       .catch(next);

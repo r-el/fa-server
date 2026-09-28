@@ -112,4 +112,34 @@ describe("v (validateRequest) Middleware", () => {
     expect(error.statusCode).toBe(400);
     expect(error.errors).toBeDefined();
   });
+
+  it("handles getter-only properties (Express 5 query/params) without error", async () => {
+    const middleware = v(
+      z.object({
+        query: z.object({ page: z.coerce.number() }),
+      }),
+    );
+
+    const req: any = {};
+    const originalQuery = { page: "5" };
+    Object.defineProperty(req, "query", {
+      get() {
+        return originalQuery;
+      },
+      configurable: true,
+    });
+
+    const res: any = {};
+    const next = vi.fn();
+
+    await new Promise<void>((resolve) => {
+      middleware(req, res, ((...args: any[]) => {
+        next(...args);
+        resolve();
+      }) as any);
+    });
+
+    expect(next).toHaveBeenCalledWith();
+    expect(req.query).toEqual({ page: 5 });
+  });
 });
