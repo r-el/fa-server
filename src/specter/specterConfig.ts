@@ -1,11 +1,30 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 const OWNER_ID_PATTERN = /^[a-z0-9_]+$/;
 
+function defaultTokenFile(): string {
+  const dockerSecret = "/run/secrets/specter_api_token";
+  if (existsSync(dockerSecret)) return dockerSecret;
+
+  // From source: Specter repo root is 5 levels up from src/specter (or dist/specter)
+  const devSecret = fileURLToPath(new URL("../../../../../.dev/secrets/api.token", import.meta.url));
+  if (existsSync(devSecret)) return devSecret;
+
+  const deploySecret = fileURLToPath(new URL("../../../../../deploy/secrets/api.token", import.meta.url));
+  if (existsSync(deploySecret)) return deploySecret;
+
+  return dockerSecret;
+}
+
 const specterEnvironmentSchema = z.object({
   SPECTER_API_URL: z.string().url().default("http://127.0.0.1:8000"),
   // In Docker the Compose secret; from source, Specter's .dev/secrets/api.token.
-  SPECTER_API_TOKEN_FILE: z.string().min(1).default("/run/secrets/specter_api_token"),
+  SPECTER_API_TOKEN_FILE: z
+    .string()
+    .min(1)
+    .default(() => defaultTokenFile()),
   SPECTER_NATS_URL: z.string().min(1).default("nats://127.0.0.1:4222"),
   SPECTER_OWNER_ID: z.string().regex(OWNER_ID_PATTERN).default("facealert"),
   SPECTER_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),

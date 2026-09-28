@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { isSpecterId, SpecterApiError, SpecterHttpClient } from "@specter/specterHttpClient.js";
-import type { SpecterConfig } from "@specter/specterConfig.js";
+import { loadSpecterConfig, type SpecterConfig } from "@specter/specterConfig.js";
 
 const CAMERA_ID = `camera_${"a".repeat(32)}`;
 
@@ -61,9 +61,7 @@ describe("SpecterHttpClient", () => {
         : jsonResponse(401, { detail: "invalid token" });
     });
 
-    await client.unwrap(
-      client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "facealert" } } }),
-    );
+    await client.unwrap(client.api.GET("/owners/{owner_id}/cameras", { params: { path: { owner_id: "facealert" } } }));
 
     expect(seenAuthorizations).toEqual(["Bearer old-token", "Bearer new-token"]);
   });
@@ -96,5 +94,48 @@ describe("SpecterHttpClient", () => {
 
     await expect(call).rejects.toBeInstanceOf(SpecterApiError);
     await expect(call).rejects.toMatchObject({ statusCode: 503 });
+  });
+
+  it("throws 503 if the token file cannot be read", async () => {
+    const client = new SpecterHttpClient({
+      apiUrl: "http://specter.test",
+      apiTokenFile: "/non/existent/path/api.token",
+      natsUrl: "nats://unused",
+      ownerId: "facealert",
+      requestTimeoutMs: 1_000,
+    });
+
+    await expect(client.authorizationHeader()).rejects.toMatchObject({
+      statusCode: 503,
+      message: "Specter is unavailable",
+    });
+  });
+});
+
+describe("loadSpecterConfig", () => {
+  it("loads config with custom environment overrides", () => {
+    const config = loadSpecterConfig({
+      SPECTER_API_URL: "http://custom-specter:9000/",
+      SPECTER_API_TOKEN_FILE: "/custom/token/path",
+      SPECTER_NATS_URL: "nats://custom:4222",
+      SPECTER_OWNER_ID: "customowner",
+      SPECTER_REQUEST_TIMEOUT_MS: "5000",
+    });
+
+    expect(config).toEqual({
+      apiUrl: "http://custom-specter:9000",
+      apiTokenFile: "/custom/token/path",
+      natsUrl: "nats://custom:4222",
+      ownerId: "customowner",
+      requestTimeoutMs: 5000,
+    });
+  });
+
+  it("loads defaults when environment is empty", () => {
+    const config = loadSpecterConfig({});
+    expect(config.apiUrl).toBe("http://127.0.0.1:8000");
+    expect(config.ownerId).toBe("facealert");
+    expect(config.requestTimeoutMs).toBe(10000);
+    expect(config.apiTokenFile).toBeTruthy();
   });
 });
