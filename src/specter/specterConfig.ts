@@ -1,10 +1,25 @@
+import { existsSync } from "node:fs";
 import { z } from "zod";
 
 const OWNER_ID_PATTERN = /^[a-z0-9_]+$/;
 
+function defaultApiTokenFile(): string {
+  const candidates = [
+    "/run/secrets/specter_api_token",
+    "../../.dev/secrets/api.token",
+    "../../deploy/secrets/api.token",
+    "../../../.dev/secrets/api.token",
+    "../../../deploy/secrets/api.token",
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return "/run/secrets/specter_api_token";
+}
+
 const specterEnvironmentSchema = z.object({
   SPECTER_API_URL: z.string().url().default("http://127.0.0.1:8000"),
-  SPECTER_API_TOKEN_FILE: z.string().min(1).default("/run/secrets/specter_api_token"),
+  SPECTER_API_TOKEN_FILE: z.string().min(1).default(defaultApiTokenFile),
   SPECTER_NATS_URL: z.string().min(1).default("nats://127.0.0.1:4222"),
   SPECTER_OWNER_ID: z.string().regex(OWNER_ID_PATTERN).default("facealert"),
   SPECTER_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),

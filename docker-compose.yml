@@ -30,5 +30,5 @@ networks:
 
 secrets:
   specter_api_token:
-    # Relative to this Compose file: server/../../.. is the Specter repository root.
-    file: ../../../deploy/secrets/api.token
+    # Relative to this Compose file: server/../.. is the Specter repository root.
+    file: ../../deploy/secrets/api.token

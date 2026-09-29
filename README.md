@@ -1,6 +1,6 @@
-# FaceAlert Server (fa-server)
+# Specter Server (specter-server)
 
-Application server and Anti-Corruption Layer (ACL) connecting FaceAlert clients to the Specter edge vision engine.
+Application server and Anti-Corruption Layer (ACL) connecting clients to the Specter edge vision engine.
 
 ## Overview & Architecture
 
@@ -56,7 +56,7 @@ SUPABASE_KEY=<your-anon-or-service-key>
 
 # Specter Integration
 SPECTER_API_URL=http://127.0.0.1:8000
-SPECTER_API_TOKEN_FILE=../../../deploy/secrets/api.token
+SPECTER_API_TOKEN_FILE=../../deploy/secrets/api.token
 SPECTER_NATS_URL=nats://127.0.0.1:4222
 SPECTER_OWNER_ID=facealert
 
