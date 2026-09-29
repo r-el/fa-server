@@ -1,182 +1,91 @@
-# Specter Server
+# FaceAlert Server (fa-server)
 
-## Installation and Setup
+Application server and Anti-Corruption Layer (ACL) connecting FaceAlert clients to the Specter edge vision engine.
+
+## Overview & Architecture
+
+- **Runtime**: Node.js 22+, Express 5, ESM, TypeScript, tsyringe for dependency injection.
+- **Data & Auth Ownership**:
+  - **Supabase**: User accounts, credentials, and camera assignments.
+  - **Specter**: Source of truth for vision entities (cameras, watchlists, targets, enrollments, vision alerts).
+  - **NATS JetStream**: Real-time event subscription for camera status changes and alerts relayed via Socket.IO.
+- **API Routing**: All application routes live under `/api` to avoid route collisions with frontend client-side paths.
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js v16+
-- npm or yarn
+- Node.js 22+
+- npm 10+
+- Running Specter instance (or Docker base stack)
 
-### Installation
+### Installation & Run
 
 ```bash
-cd fa-server
+cd server
 npm install
-```
 
-### Running
-
-```bash
-# Development mode (with hot reload)
+# Development (with watch and tsconfig path resolution)
 npm run dev
 
-# Production mode
-npm start
+# Typecheck and tests
+npm run typecheck
+npm run test
+
+# Re-sync OpenAPI / JSONSchema contracts from Specter
+npm run specter:contracts
 ```
 
-## Configuration
+---
 
-### Environment Variables
+## Configuration (`.env`)
 
-Create a `.env` file in the server directory:
+See `.env.example` for the full reference. Key settings:
 
 ```env
-# Environment
-NODE_ENV=development
-
 # Server
 PORT=12113
 HOST=localhost
-
-# CORS
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:12113
 
-# Database - Supabase (Required)
-SUPABASE_URL=your_supabase_url_here
-SUPABASE_KEY=your_supabase_anon_key_here
+# Supabase (Auth & Users)
+SUPABASE_URL=https://<your-project>.supabase.co
+SUPABASE_KEY=<your-anon-or-service-key>
+
+# Specter Integration
+SPECTER_API_URL=http://127.0.0.1:8000
+SPECTER_API_TOKEN_FILE=../../../deploy/secrets/api.token
+SPECTER_NATS_URL=nats://127.0.0.1:4222
+SPECTER_OWNER_ID=facealert
+
+# Vector Database (Diagnostics)
+QDRANT_URL=http://127.0.0.1:6333
 ```
 
-### Configuration Files
+> **Note**: In Docker production deployments, `SPECTER_API_TOKEN_FILE` is typically mounted at `/run/secrets/specter_api_token`.
 
-- `src/config/server.js` - Basic server configuration
-- `src/config/cors.js` - CORS configuration
-- `.env` - Environment variables
+---
 
-## Project Structure
+## API Routes Overview
 
-```text
-server/
-├── src/
-│   ├── config/          # Configurations
-│   │   ├── server.js    # Server configuration
-│   │   └── cors.js      # CORS configuration
-│   ├── controllers/     # API controllers
-│   │   ├── rootController.js
-│   │   └── healthController.js
-│   ├── middlewares/     # Middlewares
-│   │   └── errorHandler.js
-│   ├── routes/          # API routes
-│   │   ├── rootRoutes.js
-│   │   └── healthRoutes.js
-│   └── server.js        # Main server file
-├── .env                 # Environment variables
-├── .env.example         # Environment variables example
-├── index.js             # Entry point
-└── package.json         # Dependencies and scripts
-```
+All routes are mounted under `/api`:
 
-## Features
+| Path                        | Description                                              | Access                    |
+| --------------------------- | -------------------------------------------------------- | ------------------------- |
+| `GET /api/health`           | Healthcheck and uptime                                   | Public                    |
+| `/api/auth/*`               | Login, registration, token refresh                       | Public                    |
+| `/api/users/*`              | User management and roles                                | Protected (Admin/Manager) |
+| `/api/cameras/*`            | Camera CRUD, start/stop, status, live tickets            | Protected (Role/Assigned) |
+| `/api/alerts/*`             | Vision alerts, filtering, acknowledge/resolve, snapshots | Protected                 |
+| `/api/watchlists/*`         | Watchlist and target CRUD, photo uploads/previews        | Protected                 |
+| `/api/enrollment-batches/*` | Reference photo enrollment status                        | Protected                 |
+| `/api/dashboard/*`          | Summary metrics and statistics                           | Protected                 |
 
-- Express.js - Fast and lightweight web framework
-- CORS - Cross-origin resource sharing support
-- Helmet - Basic security
-- ES Modules - Modern module support
-- Error Handling - Advanced error handling
-- Environment Variables - Dynamic configuration
+---
 
-## API Endpoints
+## Live Video & Realtime
 
-### GET /
-
-Basic connection test
-
-```json
-{
-  "success": true,
-  "message": "Welcome to Specter Server!"
-}
-```
-
-### GET /health
-
-Health check endpoint for monitoring and deployment verification
-
-```json
-{
-  "success": true,
-  "message": "Server is healthy",
-  "timestamp": "2025-09-14T10:30:00.000Z",
-  "uptime": 123.456,
-  "environment": "development"
-}
-```
-
-## Development
-
-### Adding a New Route
-
-1. Create a controller in `src/controllers/`
-2. Create a dedicated route file in `src/routes/` (e.g., `userRoutes.js`)
-3. Import and connect the route to server in `src/server.js`
-
-Example structure:
-
-- `src/controllers/userController.js` - Controller logic
-- `src/routes/userRoutes.js` - Route definitions
-- `src/server.js` - Route registration
-
-### Error Handling
-
-The server includes global error handling with:
-
-- Development mode: Full error details and stack traces
-- Production mode: Generic error messages for security
-
-### Production Deployment
-
-For production deployment, ensure these environment variables are set:
-
-```env
-NODE_ENV=production
-PORT=3000
-HOST=0.0.0.0
-ALLOWED_ORIGINS=https://yourdomain.com
-SUPABASE_URL=your_production_supabase_url
-SUPABASE_KEY=your_production_supabase_key
-
-```
-
-#### Heroku Deployment
-
-Set environment variables using Heroku CLI:
-
-```bash
-heroku config:set NODE_ENV=production
-heroku config:set SUPABASE_URL=your_supabase_url
-heroku config:set SUPABASE_KEY=your_supabase_key
-```
-
-#### GitHub Secrets (for CI/CD)
-
-Add these secrets to your GitHub repository:
-
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-
-- Detailed logging
-- Customized error messages
-- Stack trace in development environment
-
-## Main Dependencies
-
-- express - Web framework
-- cors - CORS support
-- helmet - HTTP headers security
-- dotenv - Environment variables loading
-
-## Security
-
-- Helmet.js for HTTP headers protection
-- CORS restricted to allowed domains
-- "X-Powered-By" header hiding
-- Request size limit (10MB)
+- **Live Video**: Clients request a short-lived, single-use ticket via `/api/cameras/:id/live/ticket` and upgrade to WebSocket for low-latency MSE streaming (fallback to authenticated JPEG snapshot endpoint).
+- **Socket.IO**: Real-time push notifications for camera status and vision alerts, scoped to authorized rooms.
